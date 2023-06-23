@@ -22,98 +22,27 @@ stages:
   - publish
   - scan
 
-# The YAML file defines a set of jobs with constraints stating when they should be run.
-# You can specify an unlimited number of jobs which are defined as top-level elements with an arbitrary name and always
-#  have to contain at least the script clause.
-# In this case we have only the test job which produces a coverage report and the unittest output (see setup.cfg), and
-#  the coverage xml report is moved to the reports directory while the html output is persisted for use by the pages
-#  job. TODO: possibly a candidate for refactor / renaming later on.
-test:
-  stage: test
-#  tags:
-#   - k8srunner
-  script:
-  #  - pipenv run python setup.py test
-   - python3 setup.py test
-   - mv coverage.xml ./build/reports/code-coverage.xml
-  artifacts:
-    paths:
-    - ./build
-    - htmlcov
-
-list_dependencies:
-  stage: test
-  script:
-    # - pipenv graph >> pipenv_deps.txt
-    - pipdeptree --json >> pip_deps.json
-    - pipdeptree >> pip_deps.txt
-    - dpkg -l >> system_deps.txt
-    - awk 'FNR>5 {print $2 ", " $3}' system_deps.txt >> system_deps.csv
-    - mkdir .public
-    - cp pip_deps.txt .public/
-    - cp pip_deps.json .public/
-    - cp system_deps.txt .public/
-    - cp system_deps.csv .public/
-    - mv .public public
-  artifacts:
-    paths:
-      - public
-
-linting:
-  image: $SKA_PYTHON_PYTANGO_BUILDER_IMAGE
-  tags:
-    - k8srunner
-  stage: linting
-  script:
-    - make lint
-  when: always
-  artifacts:
-    paths:
-      - ./build
-
-pages:
-  stage: deploy
-  tags:
-   - k8srunner
-  dependencies:
-    - test
-  script:
-   - ls -la
-   - mkdir .public
-   - cp -r htmlcov/* .public
-   - rm -rf htmlcov
-   - mv .public public
-  artifacts:
-    paths:
-      - public
-    expire_in: 30 days
-
-# *********************************************
-# The ci badges are generated from the test results found in specified paths.
-# First we need to copy the test result files to the correct paths.
-move-test-artifacts:
-  stage: publish
-  tags:
-    - k8srunner
-  image: $SKA_K8S_TOOLS_DEPLOY_IMAGE
-  script:
-    - if true; then echo "script passed"; fi
-  after_script:
-# NOTE: THE source PATHS (path/to/) ARE EXAMPLES ONLY AND SHOULD BE CHANGED
-    - mkdir build/reports
-    - mv path/to/report.xml build/reports/unit-tests.xml
-    - mv path/to/coverage.xml build/reports/code-coverage.xml
-    - mv path/to/linting.xml build/reports/linting.xml
-    - cat build/reports/linting.xml
-  artifacts:
-    paths:
-      - build
-
 # Standardised included jobs
 include:
 # Umbrella include for all Python life cycle stages
 - project: 'ska-telescope/templates-repository'
   file: 'gitlab-ci/includes/python.gitlab-ci.yml'
+
+# OCI
+- project: 'ska-telescope/templates-repository'
+  file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
+
+# Docs pages
+- project: 'ska-telescope/templates-repository'
+  file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
+
+# Create Gitlab CI badges from CI metrics
+- project: 'ska-telescope/templates-repository'
+  file: 'gitlab-ci/includes/finaliser.gitlab-ci.yml'
+
+# Create a release
+- project: 'ska-telescope/templates-repository'
+  file : 'gitlab-ci/includes/release.gitlab-ci.yml'
 
 # Create Gitlab CI badges from CI metrics
 # https://developer.skatelescope.org/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline

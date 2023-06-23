@@ -1,0 +1,14 @@
+ARG SEND_BUILDER_IMAGE=""
+ARG SMRB_RUNTIME_IMAGE=""
+ARG SEND_RUNTIME_IMAGE=""
+
+FROM $SMRB_RUNTIME_IMAGE as smrb-runtime
+
+FROM $SEND_BUILDER_IMAGE as builder
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LD_LIBRARY_PATH=/usr/local/lib/
+
+# Compilation
+COPY . /mnt/
+WORKDIR /mnt/

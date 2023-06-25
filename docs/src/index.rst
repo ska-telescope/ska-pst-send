@@ -1,17 +1,28 @@
-SKA-PST-STAT
-=============
+.. skeleton documentation master file, created by
+   sphinx-quickstart on Thu May 17 15:17:35 2018.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
-This project provides the libraries and applications required for the STAT
-software component of the Square Kilometre Array (SKA)'s Pulsar Timing (PST) instrument. 
+
+.. HOME SECTION ==================================================
+
+.. Hidden toctree to manage the sidebar navigation.
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Home
+  :hidden:
+
 
 .. README =============================================================
 
-.. toctree::
-  :maxdepth: 1
-  :caption: Readme
-  :hidden:
+.. This project most likely has it's own README. We include it here.
 
-  ../../README.md
+.. toctree::
+   :maxdepth: 2
+   :caption: Readme
+
+   ../../README
 
 .. COMMUNITY SECTION ==================================================
 
@@ -19,33 +30,15 @@ software component of the Square Kilometre Array (SKA)'s Pulsar Timing (PST) ins
 
 .. toctree::
   :maxdepth: 2
-  :caption: Architecture
+  :caption: Package name
   :hidden:
 
-  architecture/index
+  package/guide
 
-.. toctree::
-  :maxdepth: 2
-  :caption: Applications
-  :hidden:
 
-  apps/index
+Project-name documentation HEADING
+==================================
 
-.. toctree::
-  :maxdepth: 3
-  :caption: API
-  :hidden:
+These are all the packages, functions and scripts that form part of the project.
 
-  api/library_root
-
-.. Applications
-.. ==================================
-
-.. - :doc:`apps/index`
-
-.. API
-.. ==================================
-
-.. These are all the packages, functions and scripts that form part of the project.
-
-.. - :doc:`api/library_root`
+- :doc:`package/guide`

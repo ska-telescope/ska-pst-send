@@ -35,3 +35,7 @@ OCI_BUILD_ADDITIONAL_ARGS	=--build-arg SMRB_RUNTIME_IMAGE=${SMRB_RUNTIME_IMAGE}:
 
 python-pre-lint:
 	pip install isort black flake8 pylint-junit pytest build
+
+docs-pre-build:
+	pip install breathe exhale
+	apt install -y doxygen

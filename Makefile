@@ -38,4 +38,3 @@ python-pre-lint:
 
 docs-pre-build:
 	pip install breathe exhale
-	apt install -y doxygen

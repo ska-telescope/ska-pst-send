@@ -15,7 +15,7 @@ oci-image-build:
   dependencies:
     - dynamic_vars
   script:
-    - make oci-build-all CAR_OCI_REGISTRY_HOST=${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} OCI_BUILD_ADDITIONAL_ARGS=" --build-arg SEND_BASE_IMAGE=$(SEND_BASE_IMAGE) --build-arg SEND_BUILDER=$(PST_OCI_SEND_BUILDER) --build-arg SEND_RUNTIME=$(PST_SEND_OCI_RUNTIME)"
+    make oci-build-all OCI_IMAGE="ska-pst-send-builder ska-pst-send" CAR_OCI_REGISTRY_HOST=${CI_REGISTRY}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} OCI_BUILD_ADDITIONAL_ARGS=" --build-arg SEND_BASE_IMAGE=${SEND_BASE_IMAGE} --build-arg SEND_BUILDER=${PST_OCI_SEND_BUILDER} --build-arg SEND_RUNTIME=${PST_SEND_OCI_RUNTIME}"
 
 oci-image-publish:
   when: manual

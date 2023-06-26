@@ -5,14 +5,12 @@ DOCS_SOURCEDIR=./docs/src
 # This Makefile uses templates defined in the .make/ folder, which is a git submodule of
 # https://gitlab.com/ska-telescope/sdi/ska-cicd-makefile.
 
--include .make/docs.mk
--include .make/help.mk
--include .make/oci.mk
--include .make/python.mk
--include .make/release.mk
+include .make/base.mk
+include .make/oci.mk
+include .make/python.mk
 
 # common pst makefile library
--include .pst/base.mk
+include .pst/base.mk
 
 # include your own private variables for custom deployment configuration
 -include PrivateRules.mak
@@ -49,5 +47,5 @@ PKG_CLI_PARAMETERS 	?= 	# Package manager installation parameters
 local-pkg-install:
 	$(PKG_CLI_CMD) $(PKG_CLI_PARAMETERS) `cat $(PKG_CLI_PAYLOAD)`
 
-OCI_IMAGE = "ska-pst-send-builder ska-pst-send"
+OCI_IMAGES = ska-pst-send-builder ska-pst-send
 OCI_IMAGE_BUILD_CONTEXT= $(PWD)

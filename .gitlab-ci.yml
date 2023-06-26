@@ -17,7 +17,7 @@ variables:
   PST_OCI_SEND_RUNTIME_IMAGE: library/ubuntu
   PST_OCI_SEND_RUNTIME_TAG: "22.04"
   PST_SEND_OCI_RUNTIME: $PST_OCI_SEND_RUNTIME_IMAGE:$PST_OCI_SEND_RUNTIME_TAG
-  OCI_IMAGE: "ska-pst-send-builder ska-pst-send"
+  OCI_IMAGES: "ska-pst-send-builder ska-pst-send"
 
 
 # GitLab CI in conjunction with GitLab Runner can use Docker Engine to test and build any application.

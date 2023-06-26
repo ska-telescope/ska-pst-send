@@ -60,7 +60,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'SKA PST SEND'
-copyright = '2022 Square Kilometre Array Observatory'
+copyright = '2023 Square Kilometre Array Observatory'
 author = 'PST Team'
 
 # The version info for the project you're documenting, acts as replacement for

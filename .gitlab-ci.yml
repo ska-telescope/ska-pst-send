@@ -10,10 +10,6 @@ variables:
   SKA_GEMNASIUM_IMAGE: artefact.skao.int/ska-cicd-gemnasium-scanning-alpine:0.8.2
   SKA_RELEASE_REGISTRY: artefact.skao.int
   PST_DEV_REGISTRY: registry.gitlab.com/ska-telescope/pst
-  SKA_TANGO_PYTANGO_BUILDER_REGISTRY: $SKA_RELEASE_REGISTRY
-  SKA_TANGO_PYTANGO_BUILDER_IMAGE: ska-tango-images-pytango-builder
-  SKA_TANGO_PYTANGO_BUILDER_TAG: 9.3.32
-  SKA_PST_PYTHON_BUILDER_IMAGE: $SKA_TANGO_PYTANGO_BUILDER_REGISTRY/$SKA_TANGO_PYTANGO_BUILDER_IMAGE:$SKA_TANGO_PYTANGO_BUILDER_TAG
   GITLAB_OCI_COMMON_REGISTRY: registry.gitlab.com/ska-telescope/pst/ska-pst-common
   GITLAB_OCI_SMRB_REGISTRY: registry.gitlab.com/ska-telescope/pst/ska-pst-smrb
   PST_SMRB_OCI_REGISTRY: ""

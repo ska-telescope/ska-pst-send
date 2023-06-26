@@ -1,14 +1,31 @@
-ARG SEND_BUILDER_IMAGE=""
-ARG SMRB_RUNTIME_IMAGE=""
-ARG SEND_RUNTIME_IMAGE=""
+ARG SEND_BUILDER=""
+ARG SEND_RUNTIME=""
 
-FROM $SMRB_RUNTIME_IMAGE as smrb-runtime
+FROM $SEND_BUILDER as builder
 
-FROM $SEND_BUILDER_IMAGE as builder
-
+FROM $SEND_RUNTIME
 ENV DEBIAN_FRONTEND noninteractive
-ENV LD_LIBRARY_PATH=/usr/local/lib/
+LABEL \
+    author="Jesmigel A. Cantos <jesmigel.developer@gmail.com>" \
+    description="This image includes the dependencies for building ska-pst-send" \
+    license="BSD-3-Clause" \
+    base="${SEND_BASE_IMAGE}" \
+    org.skatelescope.team="PST Team" \
+    org.skatelescope.version="0.0.0" \
+    int.skao.application="ska-pst-send Builder"
+# ska-pst-send runtime artefacts
+# install minimum required dependencies
+# clean package manager(s)
 
-# Compilation
-COPY . /mnt/
-WORKDIR /mnt/
+# Copy across files that are used to help orchestrate container compositions
+# and test execution sequences
+ARG UID=1000
+ARG GID=1000
+ARG UNAME=pst
+
+RUN groupadd -g $GID $UNAME  && \
+    useradd -m -u $UID -g $GID -s /bin/bash $UNAME
+
+# Add steps for runtime tests
+
+CMD ["/bin/bash"]

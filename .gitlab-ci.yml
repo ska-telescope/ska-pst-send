@@ -9,7 +9,7 @@ variables:
   OCI_IMAGE_BUILD_CONTEXT: $(PWD)
   SKA_GEMNASIUM_IMAGE: artefact.skao.int/ska-cicd-gemnasium-scanning-alpine:0.8.2
   SKA_RELEASE_REGISTRY: artefact.skao.int
-  PST_DEV_REGISTRY: registry.gitlab.com/ska-telescope/pst
+  GITLAB_OCI_SEND_REGISTRY: registry.gitlab.com/ska-telescope/pst/ska-pst-send
   SEND_BASE_IMAGE: library/ubuntu:22.04
   PST_OCI_SEND_BUILDER_IMAGE: ska-pst-send-builder
   PST_OCI_SEND_BUILDER_TAG: "0.0.0"

@@ -35,7 +35,6 @@ OCI_BUILD_ADDITIONAL_ARGS	= --build-arg SEND_BASE_IMAGE=$(SEND_BASE_IMAGE) --bui
 python-pre-lint:
 	pip install isort black flake8 pylint-junit pytest build
 
-DOCS_SPHINXOPTS=html
 docs-pre-build:
 	pip install -r docs/requirements.txt
 

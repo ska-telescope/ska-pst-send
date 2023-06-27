@@ -38,4 +38,4 @@ RUN ln -sfn /usr/bin/python3 /usr/bin/python && \
 RUN poetry install && \
     poetry run bash -c 'make python-test'
 
-ENTRYPOINT [ "poetry", "shell" ]
+CMD [ "bash" ]

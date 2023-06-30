@@ -21,7 +21,7 @@ PYTHON_PUBLISH_URL:=https://artefact.skao.int/repository/pypi-internal/
 PYTHON_SWITCHES_FOR_BLACK :=
 PYTHON_SWITCHES_FOR_ISORT :=
 
-DEV_IMAGE					?=ska-pst-send-builder
+DEV_IMAGE					?=artefact.skao.int/ska-pst-send-builder
 DEV_TAG						=`grep -m 1 -o '[0-9].*' .release`
 SEND_BASE_IMAGE				:=library/ubuntu:22.04
 PST_OCI_SEND_BUILDER_IMAGE	:=ska-pst-send-builder

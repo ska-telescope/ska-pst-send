@@ -32,9 +32,6 @@ PST_OCI_SEND_RUNTIME_TAG	:=22.04
 PST_SEND_OCI_RUNTIME		:=$(PST_OCI_SEND_RUNTIME_IMAGE):$(PST_OCI_SEND_RUNTIME_TAG)
 OCI_BUILD_ADDITIONAL_ARGS	= --build-arg SEND_BASE_IMAGE=$(SEND_BASE_IMAGE) --build-arg SEND_BUILDER=$(PST_OCI_SEND_BUILDER) --build-arg SEND_RUNTIME=$(PST_SEND_OCI_RUNTIME)
 
-python-pre-lint:
-	pip install isort black flake8 pylint-junit pytest build
-
 docs-pre-build:
 	pip install -r docs/requirements.txt
 

@@ -15,6 +15,7 @@ def test_metadata_schema():
     assert type(pst_mdb.pst_metadata.config) is PstConfig
     assert type(pst_mdb.pst_metadata.obscore) is PstObsCore
 
+
 """
 TODO: test read and compare data from header or weights file
 TODO: test contents of context

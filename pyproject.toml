@@ -8,6 +8,7 @@ authors = ["Jesmigel A. Cantos <jesmigel.developer@gmail.com>"]
 python = "^3.10"
 
 [tool.poetry.dev-dependencies]
+nptyping = "^2.5.0"
 pytest = "^6.2"
 pytest-cov = "^3.0.0"
 

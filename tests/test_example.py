@@ -4,7 +4,7 @@
 """Tests for the ska_python_skeleton module."""
 import pytest
 
-from ska.protosend import SKA, function_example
+from ska.protosend.example import SKA, function_example
 
 """
 TODO: Replace all the following examples with tests

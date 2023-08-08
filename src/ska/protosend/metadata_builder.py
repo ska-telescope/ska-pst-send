@@ -14,7 +14,8 @@ __all__ = [
 
 import logging
 import pathlib
-from datetime import datetime
+from datetime import datetime, timedelta
+from decimal import Decimal
 
 from .dataproduct_file_manager import DadaFileManager
 from .metadata import PstConfig, PstContext, PstFiles, PstMetadata, PstObsCore
@@ -125,16 +126,27 @@ class MetaDataBuilder:
         )
         self._pst_metadata.files = dada_files
 
-    def convert_utc_to_mjd(self: MetaDataBuilder, utc_datetime: str) -> str:
+    def convert_utc_to_mjd(
+        self: MetaDataBuilder,
+        utc_datetime: str,
+        datetime_format: str = "%Y-%m-%d-%H:%M:%S",
+    ) -> str:
         """Convert datetime UTC format to MJD"""
-        date_object = datetime.strptime(utc_datetime, "%Y-%m-%d-%H:%M:%S")
+        date_object = datetime.strptime(utc_datetime, datetime_format)
 
-        # Calculate Julian Date
-        days_since_2000_01_01 = (date_object - datetime(2000, 1, 1)).days
+        # Calculate Julian Date (including fractional part)
+        days_since_2000_01_01 = (
+            date_object - datetime(2000, 1, 1)
+        ).total_seconds() / (24 * 3600)
         jd = days_since_2000_01_01 + 2451544.5
 
         # Calculate Modified Julian Date (MJD)
-        return str(jd - 2400000.5)
+        mjd = jd - 2400000.5
+
+        # Round to the desired accuracy
+        rounded_mjd = round(mjd, 10)
+
+        return str(Decimal(rounded_mjd))
 
     def build_obscore(self: MetaDataBuilder) -> None:
         """Build PstObsCore used for obscore block in metadata file."""
@@ -147,6 +159,8 @@ class MetaDataBuilder:
         nchan = int(self.dada_file_manager.data_files[0].nchan)
         freq = float(self.dada_file_manager.data_files[0].freq)
         bw = float(self.dada_file_manager.data_files[0].bw)
+        stt_crd1 = self.dada_file_manager.data_files[0].stt_crd1
+        stt_crd2 = self.dada_file_manager.data_files[0].stt_crd2
 
         # Populate metadata field from hardcoded defaults
         dataproduct_type = OBSCORE_DATAPRODUCT_TYPE
@@ -157,25 +171,53 @@ class MetaDataBuilder:
         obs_id = scan_id
         target_name = self.dada_file_manager.data_files[0].source
 
-        # TODO: Confirm value format
-        s_ra = self.dada_file_manager.data_files[0].stt_crd1
-        s_dec = self.dada_file_manager.data_files[0].stt_crd2
+        from astropy import units as u
+        from astropy.coordinates import Angle, SkyCoord
+
+        angle = Angle(stt_crd2, unit="degree")
+
+        # Convert the Angle to the sexagesimal format
+        sexagesimal_format = angle.to_string(unit="hourangle", sep=":")
+        sky_coord = SkyCoord(
+            f"{stt_crd1} {sexagesimal_format}",
+            equinox="J2000",
+            unit=(u.hourangle, u.deg),
+        )
+
+        s_ra = float(sky_coord.ra.hour)
+        s_dec = float(sky_coord.dec.deg)
 
         t_min = self.convert_utc_to_mjd(utc_start)
+
+        datetime_t_min = datetime.strptime(utc_start, "%Y-%m-%d-%H:%M:%S")
+        # Convert seconds to add string to float
+        seconds_to_add = float(tsamp) / 1000000.0
+
+        # Add seconds to the datetime object
+        datetime_with_seconds_added = datetime_t_min + timedelta(
+            seconds=seconds_to_add
+        )
+        utc_format = "%Y-%m-%d-%H:%M:%S.%f"
         t_max = self.convert_utc_to_mjd(
-            utc_start
-        )  # TODO: TBC, onfirm source of utc_start
+            datetime_with_seconds_added.strftime(utc_format), utc_format
+        )
 
         # Convert microseconds to seconds
-        t_resolution = tsamp / 1000000.0
+        t_resolution = float(tsamp) / 1000000.0
 
-        # TODO: Total exposure time in seconds.
         # This is effectively the observation length
         t_exptime = tsamp
 
-        # TODO: confirm derivation process.
-        # Total data file size? Remove header from each data file?
-        access_estsize = ""
+        total_data_size = self._pst_metadata.files[0].size
+        total_header_size = 0
+
+        for index in range(0, len(self.dada_file_manager.data_files)):
+            total_header_size += self.dada_file_manager.data_files[
+                index
+            ].header_size
+
+        access_estsize = total_data_size - total_header_size
+
         facility_name = OBSCORE_FACILITY_NAME
         instrument_name = OBSCORE_INSTRUMENT_NAME
 
@@ -190,7 +232,7 @@ class MetaDataBuilder:
 
         em_min = (freq - (bw / 2)) * 1e6
         print(f"em_min {em_min}")
-        em_max = (freq - (bw / 2)) * 1e6
+        em_max = (freq + (bw / 2)) * 1e6
 
         # TBC: Not sure what this quantity really means, sky resolution.
         em_res_power = "null"

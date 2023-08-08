@@ -313,6 +313,7 @@ class PstMetadata:
         execution_block: str = "",
         context=PstContext,
         config=PstConfig,
+        obscore=PstObsCore,
     ) -> None:
         self._interface = interface
         self._execution_block = execution_block
@@ -332,31 +333,7 @@ class PstMetadata:
                 status="done",
             ),
         ]
-        self._obscore = PstObsCore(
-            dataproduct_type="timeseries",
-            dataproduct_subtype="voltages",
-            calib_level="0",
-            obs_id="",
-            access_estsize="",
-            target_name="None",
-            s_ra="",
-            s_dec="",
-            t_min="",
-            t_max="",
-            t_resolution="",
-            t_exptime="",
-            facility_name="SKA-Observatory",
-            instrument_name="SKA-LOW-PST",
-            pol_xel="2",
-            pol_states="null",
-            em_xel="",
-            em_unit="Hz",
-            em_min="",
-            em_max="",
-            em_res_power="null",
-            em_resolution="",
-            o_ucd="null",
-        )
+        self._obscore = obscore
 
     # Properties with setters
     @property

@@ -3,11 +3,13 @@ name = "protosend"
 version = "0.0.0"
 description = ""
 authors = ["Jesmigel A. Cantos <jesmigel.developer@gmail.com>"]
+include = ["src/ska/pst/send"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 
 [tool.poetry.dev-dependencies]
+astropy = "^5.3.1"
 black = "^23.7.0"
 build = "^0.10.0"
 flake8 = "^6.1.0"

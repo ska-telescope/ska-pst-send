@@ -409,5 +409,5 @@ class PstMetadata:
 
     @property
     def yaml_object(self) -> yaml.YAMLObject:
-        metadata_dict = self.metadata_to_dict()
+        metadata_dict = self.to_dict()
         return yaml.load(yaml.dump(metadata_dict), Loader=yaml.SafeLoader)

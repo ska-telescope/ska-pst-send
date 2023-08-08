@@ -14,10 +14,10 @@ __all__ = [
 
 import logging
 import pathlib
-import yaml
-
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+import yaml
 
 from .dataproduct_file_manager import DadaFileManager
 from .metadata import PstConfig, PstContext, PstFiles, PstMetadata, PstObsCore
@@ -277,11 +277,13 @@ class MetaDataBuilder:
 
         self._pst_metadata.obscore = obscore
 
-    def write_metadata(self: MetaDataBuilder, file_name: str = "ska-data-product.yaml"):
+    def write_metadata(
+        self: MetaDataBuilder, file_name: str = "ska-data-product.yaml"
+    ):
         """Write YAML object to a YAML file."""
-        
+
         absolute_path = f"{self._dsp_mount_path}/{file_name}"
-        with open(absolute_path, 'w') as yaml_file:
+        with open(absolute_path, "w") as yaml_file:
             yaml.dump(self.pst_metadata.to_dict(), yaml_file)
 
     @property

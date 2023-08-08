@@ -1,8 +1,11 @@
 import os
 
+import yaml
+
 from ska.protosend.metadata import (
     PstConfig,
     PstContext,
+    PstFiles,
     PstMetadata,
     PstObsCore,
 )
@@ -23,44 +26,64 @@ TODO: test compute values involving multiple dada files
 TODO: test write, read, load generated yaml file
 """
 
+
 def test_write_metadata():
     pst_mdb = MetaDataBuilder()
     pst_mdb.dsp_mount_path = "/tmp/"
 
     pst_context = PstContext(
-                    observer="jdoe",
-                    intent="Tied-array beam observation of J1921+2153",
-                    notes="notes TBD"
-                )
+        observer="jdoe",
+        intent="Tied-array beam observation of J1921+2153",
+        notes="notes TBD",
+    )
     pst_config = PstConfig(
-                    image="artefact.skao.int/ska-pst/ska-pst",
-                    version="0.1.3"
-                )
-    pst_obscore = PstObsCore(dataproduct_type="timeseries",
-                    dataproduct_subtype="voltages",
-                    calib_level=0,
-                    obs_id=485,
-                    access_estsize=343277568,
-                    target_name="J1921+2153",
-                    s_ra=19.362448611111116,
-                    s_dec=1.4589333333333332,
-                    t_min="40587",
-                    t_max="40587.00000000229920260608196258544921875",
-                    t_resolution=0.00020736000000000002,
-                    t_exptime=207.36,
-                    facility_name="SKA-Observatory",
-                    instrument_name="SKA-LOW",
-                    pol_xel=2,
-                    pol_states="null",
-                    em_xel=432,
-                    em_unit="Hz",
-                    em_min=999218750.0,
-                    em_max=1000781250.0,
-                    em_res_power="null",
-                    em_resolution=3616.8981481481483,
-                    o_ucd="null"
-                )
+        image="artefact.skao.int/ska-pst/ska-pst", version="0.1.3"
+    )
+    pst_files = [
+        PstFiles(
+            description="Channelised voltage data raw files",
+            path="data",
+            size="343326720",
+            status="done",
+        ),
+        PstFiles(
+            description="Channelised voltage weights raw files",
+            path="weights",
+            size="2954496",
+            status="done",
+        ),
+    ]
+    pst_obscore = PstObsCore(
+        dataproduct_type="timeseries",
+        dataproduct_subtype="voltages",
+        calib_level=0,
+        obs_id=485,
+        access_estsize=343277568,
+        target_name="J1921+2153",
+        s_ra=19.362448611111116,
+        s_dec=1.4589333333333332,
+        t_min="40587",
+        t_max="40587.00000000229920260608196258544921875",
+        t_resolution=0.00020736000000000002,
+        t_exptime=207.36,
+        facility_name="SKA-Observatory",
+        instrument_name="SKA-LOW",
+        pol_xel=2,
+        pol_states="null",
+        em_xel=432,
+        em_unit="Hz",
+        em_min=999218750.0,
+        em_max=1000781250.0,
+        em_res_power="null",
+        em_resolution=3616.8981481481483,
+        o_ucd="null",
+    )
 
+    pst_mdb.pst_metadata.interface = (
+        "http://schema.skao.int/ska-data-product-meta/0.1"
+    )
+    pst_mdb.pst_metadata.execution_block = "eb-19700101-485"
+    pst_mdb.pst_metadata.files = pst_files
     pst_mdb.pst_metadata.context = pst_context
     pst_mdb.pst_metadata.config = pst_config
     pst_mdb.pst_metadata.obscore = pst_obscore
@@ -71,3 +94,11 @@ def test_write_metadata():
     absolute_path = f"{pst_mdb.dsp_mount_path}/ska-data-product.yaml"
 
     assert os.path.exists(absolute_path)
+
+    with open(absolute_path, "r") as yaml_file:
+        data = yaml.safe_load(yaml_file)
+        # Update the properties of the metadata object with loaded data
+        assert data.get("interface") == pst_mdb.pst_metadata.interface
+        assert (
+            data.get("execution_block") == pst_mdb.pst_metadata.execution_block
+        )

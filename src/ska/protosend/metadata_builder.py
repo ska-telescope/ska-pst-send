@@ -30,6 +30,7 @@ INTERFACE = "http://schema.skao.int/ska-data-product-meta/0.1"
 CONFIG_IMAGE = "artefact.skao.int/ska-pst/ska-pst"
 CONFIG_VERSION = "0.1.3"
 
+
 class MetaDataBuilder:
     """Class used for building metadata files."""
 

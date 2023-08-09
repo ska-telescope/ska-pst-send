@@ -103,36 +103,118 @@ def test_write_metadata():
             data.get("execution_block") == pst_mdb.pst_metadata.execution_block
         )
         # Data files
-        assert data.get("files")[0]['description'] == pst_mdb.pst_metadata.files[0].description
-        assert data.get("files")[0]['path'] == pst_mdb.pst_metadata.files[0].path
-        assert data.get("files")[0]['size'] == pst_mdb.pst_metadata.files[0].size
-        assert data.get("files")[0]['status'] == pst_mdb.pst_metadata.files[0].status
+        assert (
+            data.get("files")[0]["description"]
+            == pst_mdb.pst_metadata.files[0].description
+        )
+        assert (
+            data.get("files")[0]["path"] == pst_mdb.pst_metadata.files[0].path
+        )
+        assert (
+            data.get("files")[0]["size"] == pst_mdb.pst_metadata.files[0].size
+        )
+        assert (
+            data.get("files")[0]["status"]
+            == pst_mdb.pst_metadata.files[0].status
+        )
         # Weights files
-        assert data.get("files")[1]['description'] == pst_mdb.pst_metadata.files[1].description
-        assert data.get("files")[1]['path'] == pst_mdb.pst_metadata.files[1].path
-        assert data.get("files")[1]['size'] == pst_mdb.pst_metadata.files[1].size
-        assert data.get("files")[1]['status'] == pst_mdb.pst_metadata.files[1].status
+        assert (
+            data.get("files")[1]["description"]
+            == pst_mdb.pst_metadata.files[1].description
+        )
+        assert (
+            data.get("files")[1]["path"] == pst_mdb.pst_metadata.files[1].path
+        )
+        assert (
+            data.get("files")[1]["size"] == pst_mdb.pst_metadata.files[1].size
+        )
+        assert (
+            data.get("files")[1]["status"]
+            == pst_mdb.pst_metadata.files[1].status
+        )
 
-        assert data.get("obscore")["dataproduct_type"] == pst_mdb.pst_metadata.obscore.dataproduct_type
-        assert data.get("obscore")["dataproduct_subtype"] == pst_mdb.pst_metadata.obscore.dataproduct_subtype
-        assert data.get("obscore")["calib_level"] == pst_mdb.pst_metadata.obscore.calib_level
-        assert data.get("obscore")["obs_id"] == pst_mdb.pst_metadata.obscore.obs_id
-        assert data.get("obscore")["access_estsize"] == pst_mdb.pst_metadata.obscore.access_estsize
-        assert data.get("obscore")["target_name"] == pst_mdb.pst_metadata.obscore.target_name
+        assert (
+            data.get("obscore")["dataproduct_type"]
+            == pst_mdb.pst_metadata.obscore.dataproduct_type
+        )
+        assert (
+            data.get("obscore")["dataproduct_subtype"]
+            == pst_mdb.pst_metadata.obscore.dataproduct_subtype
+        )
+        assert (
+            data.get("obscore")["calib_level"]
+            == pst_mdb.pst_metadata.obscore.calib_level
+        )
+        assert (
+            data.get("obscore")["obs_id"]
+            == pst_mdb.pst_metadata.obscore.obs_id
+        )
+        assert (
+            data.get("obscore")["access_estsize"]
+            == pst_mdb.pst_metadata.obscore.access_estsize
+        )
+        assert (
+            data.get("obscore")["target_name"]
+            == pst_mdb.pst_metadata.obscore.target_name
+        )
         assert data.get("obscore")["s_ra"] == pst_mdb.pst_metadata.obscore.s_ra
-        assert data.get("obscore")["s_dec"] == pst_mdb.pst_metadata.obscore.s_dec
-        assert data.get("obscore")["t_min"] == pst_mdb.pst_metadata.obscore.t_min
-        assert data.get("obscore")["t_max"] == pst_mdb.pst_metadata.obscore.t_max
-        assert data.get("obscore")["t_resolution"] == pst_mdb.pst_metadata.obscore.t_resolution
-        assert data.get("obscore")["t_exptime"] == pst_mdb.pst_metadata.obscore.t_exptime
-        assert data.get("obscore")["facility_name"] == pst_mdb.pst_metadata.obscore.facility_name
-        assert data.get("obscore")["instrument_name"] == pst_mdb.pst_metadata.obscore.instrument_name
-        assert data.get("obscore")["pol_xel"] == pst_mdb.pst_metadata.obscore.pol_xel
-        assert data.get("obscore")["pol_states"] == pst_mdb.pst_metadata.obscore.pol_states
-        assert data.get("obscore")["em_xel"] == pst_mdb.pst_metadata.obscore.em_xel
-        assert data.get("obscore")["em_unit"] == pst_mdb.pst_metadata.obscore.em_unit
-        assert data.get("obscore")["em_min"] == pst_mdb.pst_metadata.obscore.em_min
-        assert data.get("obscore")["em_max"] == pst_mdb.pst_metadata.obscore.em_max
-        assert data.get("obscore")["em_res_power"] == pst_mdb.pst_metadata.obscore.em_res_power
-        assert data.get("obscore")["em_resolution"] == pst_mdb.pst_metadata.obscore.em_resolution
-        assert data.get("obscore")["o_ucd"] == pst_mdb.pst_metadata.obscore.o_ucd
+        assert (
+            data.get("obscore")["s_dec"] == pst_mdb.pst_metadata.obscore.s_dec
+        )
+        assert (
+            data.get("obscore")["t_min"] == pst_mdb.pst_metadata.obscore.t_min
+        )
+        assert (
+            data.get("obscore")["t_max"] == pst_mdb.pst_metadata.obscore.t_max
+        )
+        assert (
+            data.get("obscore")["t_resolution"]
+            == pst_mdb.pst_metadata.obscore.t_resolution
+        )
+        assert (
+            data.get("obscore")["t_exptime"]
+            == pst_mdb.pst_metadata.obscore.t_exptime
+        )
+        assert (
+            data.get("obscore")["facility_name"]
+            == pst_mdb.pst_metadata.obscore.facility_name
+        )
+        assert (
+            data.get("obscore")["instrument_name"]
+            == pst_mdb.pst_metadata.obscore.instrument_name
+        )
+        assert (
+            data.get("obscore")["pol_xel"]
+            == pst_mdb.pst_metadata.obscore.pol_xel
+        )
+        assert (
+            data.get("obscore")["pol_states"]
+            == pst_mdb.pst_metadata.obscore.pol_states
+        )
+        assert (
+            data.get("obscore")["em_xel"]
+            == pst_mdb.pst_metadata.obscore.em_xel
+        )
+        assert (
+            data.get("obscore")["em_unit"]
+            == pst_mdb.pst_metadata.obscore.em_unit
+        )
+        assert (
+            data.get("obscore")["em_min"]
+            == pst_mdb.pst_metadata.obscore.em_min
+        )
+        assert (
+            data.get("obscore")["em_max"]
+            == pst_mdb.pst_metadata.obscore.em_max
+        )
+        assert (
+            data.get("obscore")["em_res_power"]
+            == pst_mdb.pst_metadata.obscore.em_res_power
+        )
+        assert (
+            data.get("obscore")["em_resolution"]
+            == pst_mdb.pst_metadata.obscore.em_resolution
+        )
+        assert (
+            data.get("obscore")["o_ucd"] == pst_mdb.pst_metadata.obscore.o_ucd
+        )

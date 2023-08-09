@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of the SKA PST SEND project
+#
+# Distributed under the terms of the BSD 3-clause new license.
+# See LICENSE for more info.
+
+"""Module class for managing DADA files."""
 from __future__ import annotations
 
 import itertools
@@ -27,13 +35,17 @@ WeightsType = npt.NDArray[Any, npt.UShort]
 
 
 class DadaFileManager:
-    """Class that captures PST data files"""
+    """Class that captures PST data files."""
 
     def __init__(
         self: DadaFileManager,
         folder: pathlib.Path,
         logger: logging.Logger | None = None,
     ) -> None:
+        """Init object.
+
+        param folder: The absolute path containing the dada files.
+        """
         assert folder.exists() and folder.is_dir()
         self.folder = folder
         self._header: Dict[str, str] = {}
@@ -43,7 +55,7 @@ class DadaFileManager:
         self._get_dada_files()
 
     def _get_dada_files(self: DadaFileManager) -> None:
-        """Populate list of Data and Weights files"""
+        """Populate list of Data and Weights files."""
         data_paths = list(self.folder.glob("data/*.dada"))
         weights_paths = list(self.folder.glob("weights/*.dada"))
         assert len(data_paths) == len(
@@ -104,26 +116,20 @@ class DadaFileReader:
         """Read the header of file."""
         with open(self.file, "rb") as f:
             # memory map file - just want the first 4096 bytes
-            with mmap.mmap(
-                f.fileno(), DEFAULT_HEADER_SIZE, prot=mmap.PROT_READ
-            ) as mm:
+            with mmap.mmap(f.fileno(), DEFAULT_HEADER_SIZE, prot=mmap.PROT_READ) as mm:
                 header, header_str = self._read_header_from_mmap(mm)
 
             # if key doesn't exist or its not an int we expect this to fail
             self.header_size = int(header[HEADER_SIZE_KEY])
             if self.header_size != DEFAULT_HEADER_SIZE:
-                with mmap.mmap(
-                    f.fileno(), self.header_size, prot=mmap.PROT_READ
-                ) as mm:
+                with mmap.mmap(f.fileno(), self.header_size, prot=mmap.PROT_READ) as mm:
                     header, header_str = self._read_header_from_mmap(mm)
 
             self.logger.debug(f"Header from file {self.file}:\n{header_str}")
             self._header = header
             return header
 
-    def _read_header_from_mmap(
-        self: DadaFileReader, file: mmap.mmap
-    ) -> Tuple[Dict[str, str], str]:
+    def _read_header_from_mmap(self: DadaFileReader, file: mmap.mmap) -> Tuple[Dict[str, str], str]:
         """Read the lines of the memory mapped file into a dictionary."""
         header: Dict[str, str] = {}
 
@@ -144,9 +150,7 @@ class DadaFileReader:
             header_str += "\n"
 
             [key, value] = line.lstrip().split(" ", maxsplit=1)
-            assert (
-                len(key) > 0
-            ), f"Expected header key of line {str(currline)} to not be empty"
+            assert len(key) > 0, f"Expected header key of line {str(currline)} to not be empty"
             header[key] = value.lstrip()
 
         return header, header_str
@@ -209,18 +213,6 @@ class DadaFileReader:
         return self._header["SOURCE"]
 
     @property
-    def ra(self: DadaFileReader) -> str:
-        """Get the RA value from header."""
-        # self._header['RA'] key error
-        return "ra TBD"
-
-    @property
-    def dec(self: DadaFileReader) -> str:
-        """Get the DEC value from header."""
-        # self._header['DEC'] key error
-        return "dec TBD"
-
-    @property
     def utc_start(self: DadaFileReader) -> str:
         """Get the UTC_START value from header."""
         return self._header["UTC_START"]
@@ -252,14 +244,17 @@ class DadaFileReader:
 
     @property
     def npol(self: DadaFileManager) -> str:
+        """Get the NPOL value from header."""
         return self._header["NPOL"]
 
     @property
     def stt_crd1(self: DadaFileManager) -> str:
+        """Get the STT_CRD1 value from header."""
         return self._header["STT_CRD1"]
 
     @property
     def stt_crd2(self: DadaFileManager) -> str:
+        """Get the STT_CRD2 value from header."""
         return self._header["STT_CRD2"]
 
 
@@ -321,11 +316,7 @@ MID_BAND_CONFIG = {
 # Band 5a and 5b have the same udp_format
 UDP_FORMAT_CONFIG = {
     "LowPST": LOW_BAND_CONFIG,
-    **{
-        config["udp_format"]: config
-        for (freq_band, config) in MID_BAND_CONFIG.items()
-        if freq_band != "5b"
-    },
+    **{config["udp_format"]: config for (freq_band, config) in MID_BAND_CONFIG.items() if freq_band != "5b"},
 }
 
 
@@ -382,22 +373,14 @@ class WeightsFileReader(DadaFileReader):
         a multiple of {self.nsamp_per_weight}"""
         assert packet_nsamp % self.nsamp_per_weight == 0, msg
         self.nweight_per_packet = packet_nsamp // self.nsamp_per_weight
-        self.logger.debug(
-            f"computed weights per packet as {self.nweight_per_packet}"
-        )
+        self.logger.debug(f"computed weights per packet as {self.nweight_per_packet}")
 
         # compute the number of channels in each packet
-        assert (
-            self.packet_weights_size
-            % (self.nweight_per_packet * self.nbit // 8)
-            == 0
-        ), (
+        assert self.packet_weights_size % (self.nweight_per_packet * self.nbit // 8) == 0, (
             f"Expected packet_weights_size={self.packet_weights_size} to be a "
             f"multiple of {self.nweight_per_packet * self.nbit // 8}"
         )
-        self.nchan_per_packet = self.packet_weights_size // (
-            self.nweight_per_packet * self.nbit // 8
-        )
+        self.nchan_per_packet = self.packet_weights_size // (self.nweight_per_packet * self.nbit // 8)
         msg = f"""
                packet_weights_size={self.packet_weights_size}
                nweight_per_packet={self.nweight_per_packet}
@@ -406,9 +389,7 @@ class WeightsFileReader(DadaFileReader):
                """
         self.logger.debug(msg)
 
-        self.weights_packet_stride = (
-            self.packet_weights_size + self.packet_scales_size
-        )
+        self.weights_packet_stride = self.packet_weights_size + self.packet_scales_size
 
         msg = f"""
                weights_packet_stride={self.weights_packet_stride}
@@ -460,9 +441,7 @@ class WeightsFileReader(DadaFileReader):
 
         # scales exist for each heap and packet
         if self.unpack_scales:
-            self._scales = np.zeros(
-                (num_heaps, packets_per_heap), dtype=np.single
-            )
+            self._scales = np.zeros((num_heaps, packets_per_heap), dtype=np.single)
 
         # weights exist for each heap and channel
         if self.unpack_weights:
@@ -483,9 +462,7 @@ class WeightsFileReader(DadaFileReader):
 
         # if we're not unpacking anything then don't do anything.
         if self.unpack_scales or self.unpack_weights:
-            self._unpack_weights_data(
-                file, packets_per_heap, num_heaps, nweights
-            )
+            self._unpack_weights_data(file, packets_per_heap, num_heaps, nweights)
 
     def _unpack_weights_data(
         self: WeightsFileReader,
@@ -513,16 +490,12 @@ class WeightsFileReader(DadaFileReader):
 
             if self.unpack_weights:
                 # weights are stored as unsigned 16-bit integers
-                packet_weights = struct.unpack(
-                    f"{nweights}H", file.read(self.packet_weights_size)
-                )
+                packet_weights = struct.unpack(f"{nweights}H", file.read(self.packet_weights_size))
 
                 channel_range = range(self.nchan_per_packet)
                 weight_range = range(self.nweight_per_packet)
                 # transpose is required
-                for idx, (channel, weight) in enumerate(
-                    itertools.product(channel_range, weight_range)
-                ):
+                for idx, (channel, weight) in enumerate(itertools.product(channel_range, weight_range)):
                     osamp = heap * self.nweight_per_packet + weight
                     ochan = packet * self.nchan_per_packet + channel
                     self._weights[osamp][ochan] = packet_weights[idx]
@@ -536,9 +509,9 @@ class WeightsFileReader(DadaFileReader):
         This will assert that the udp_format is valid.
 
         This will return the configuration that is specific to a UDP format.
-        This is related to the frequency band config returned by
-        :py:func:`get_frequency_band_config` but uses the UDP format
-        as a key not the frequency band.
+        This is related to the frequency band config
+        returned by :py:func:`get_frequency_band_config`
+        but uses the UDP format as a key not the frequency band.
 
         The keys that are returned are:
             * udp_format
@@ -575,26 +548,19 @@ class WeightsFileReader(DadaFileReader):
     def scales(self: WeightsFileReader) -> ScalesType:
         """Return the unpacked scales."""
         if not self.unpack_scales:
-            raise RuntimeError(
-                "Cannot return scales as they were not unpacked from the file."
-            )
+            raise RuntimeError("Cannot return scales as they were not unpacked from the file.")
         return self._scales  # type: ignore
 
     @property
     def weights(self: WeightsFileReader) -> WeightsType:
         """Return the unpacked weights."""
         if not self.unpack_weights:
-            raise RuntimeError(
-                "Cannot return weights. They were not unpacked from the file."
-            )
+            raise RuntimeError("Cannot return weights. They were not unpacked from the file.")
         return self._weights  # type: ignore
 
     @property
     def dropped_packets(self: WeightsFileReader) -> np.ndarray:
-        """
-        Return a list of the dropped packets
-        by inspecting NaNs in the scales.
-        """
+        """Return a list of the dropped packets by inspecting NaNs in the scales."""
         # flatten the 2D array
         packet_scales = self.scales.flatten()
 

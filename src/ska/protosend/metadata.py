@@ -8,6 +8,7 @@
 """Module class for structure used for writing YAML meta data files."""
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
 import yaml
@@ -17,383 +18,248 @@ __all__ = [
     "PstConfig",
     "PstFiles",
     "PstObsCore",
-    "PstMetadata",
+    "PstMetaData",
 ]
 
 
+@dataclass
 class PstContext:
-    def __init__(
-        self: PstContext,
-        observer: str = "",
-        intent: str = "",
-        notes: str = "",
-    ) -> None:
-        self._observer = observer
-        self._intent = intent
-        self._notes = notes
+    """
+    A data class to represent the context field of a pst metadata file.
+
+    context is meant to be data passed verbatim through from OET/TMC as part of AssignResources (SDP)
+    or Configure (other sub-systems). To be made part of ska_telmodel schemas.
+
+    :ivar observer: Name or role of the person conducting the observation
+    :vartype observer: str
+    :ivar intent: intent passed from OET/TMC
+    :vartype intent: str
+    :ivar notes: notes passed from OET/TMC
+    :vartype notes: str
+    """
+
+    observer: str = field(default="")
+    intent: str = field(default="Tied-array beam observation")
+    notes: str = field(default="")
 
     def to_dict(self: PstContext) -> Dict[str, str]:
+        """Get the object properties in dict format."""
         return {
-            "observer": self._observer,
-            "intent": self._intent,
-            "notes": self._notes,
+            "observer": self.observer,
+            "intent": self.intent,
+            "notes": self.notes,
         }
 
-    @property
-    def observer(self: PstContext) -> str:
-        return self._observer
 
-    @observer.setter
-    def observer(self: PstContext, observer: str) -> None:
-        self._observer = observer
-
-    @property
-    def intent(self: PstContext) -> str:
-        return self._intent
-
-    @intent.setter
-    def intent(self: PstContext, intent: str) -> None:
-        self._intent = intent
-
-    @property
-    def notes(self: PstContext) -> str:
-        return self._notes
-
-    @notes.setter
-    def notes(self: PstContext, notes: str) -> None:
-        self._notes = notes
-
-
+@dataclass
 class PstConfig:
-    def __init__(
-        self: PstConfig,
-        image: str = "",
-        version: str = "",
-    ) -> None:
-        """"""
-        self._image = image
-        self._version = version
+    """
+    A data class to represent the config field of a pst metadata file.
 
-    def to_dict(self: PstContext) -> Dict[str, str]:
+    Configuration of generating software.
+
+    :ivar image: chart name
+    :vartype image: str
+    :ivar version: chart version
+    :vartype version: str
+    """
+
+    image: str = field(default="")
+    version: str = field(default="")
+
+    def to_dict(self: PstConfig) -> Dict[str, str]:
+        """Get the object properties in dict format."""
         return {
-            "image": self._image,
-            "version": self._version,
+            "image": self.image,
+            "version": self.version,
         }
 
-    @property
-    def image(self: PstConfig) -> str:
-        return self._image
 
-    @image.setter
-    def image(self: PstConfig, image: str) -> None:
-        self._image = image
-
-    @property
-    def version(self: PstConfig) -> str:
-        return self._version
-
-    @version.setter
-    def version(self: PstConfig, version: str) -> None:
-        self._version = version
-
-
+@dataclass
 class PstFiles:
-    def __init__(
-        self: PstFiles,
-        description: str = "",
-        path: str = "",
-        size: str = "",
-        status: str = "done",
-    ):
-        self._description = description
-        self._path = path
-        self._size = size
-        self._status = status
+    """
+    A data class to represent the files field of a pst metadata file.
+
+    Documentation concerning files coupled to the pst metadata file.
+
+    :ivar description:
+    :vartype description: str
+    :ivar path:
+    :vartype path: str
+    :ivar size:
+    :vartype size: str
+    :ivar status:
+    :vartype status: str
+    """
+
+    description: str = field(default="")
+    path: str = field(default="")
+    size: str = field(default="")
+    status: str = field(default="done")
 
     def to_dict(self: PstFiles) -> Dict[str, str]:
+        """Get the object properties in dict format."""
         return {
-            "description": self._description,
-            "path": self._path,
-            "size": self._size,
-            "status": self._status,
+            "description": self.description,
+            "path": self.path,
+            "size": self.size,
+            "status": self.status,
         }
 
-    @property
-    def description(self):
-        return self._description
 
-    @property
-    def path(self):
-        return self._path
-
-    @property
-    def size(self):
-        return self._size
-
-    @property
-    def status(self):
-        return self._status
-
-
+@dataclass
 class PstObsCore:
-    def __init__(
-        self: PstObsCore,
-        dataproduct_type: str = "",
-        dataproduct_subtype: str = "",
-        calib_level="",
-        obs_id: str = "",
-        access_estsize: str = "",
-        target_name: str = "",
-        s_ra: str = "",
-        s_dec: str = "",
-        t_min: str = "",
-        t_max: str = "",
-        t_resolution: str = "",
-        t_exptime: str = "",
-        facility_name: str = "",
-        instrument_name: str = "",
-        pol_xel: str = "",
-        pol_states: str = "",
-        em_xel: str = "",
-        em_unit: str = "",
-        em_min: str = "",
-        em_max: str = "",
-        em_res_power: str = "",
-        em_resolution: str = "",
-        o_ucd: str = "",
-    ):
-        self._dataproduct_type = dataproduct_type
-        self._dataproduct_subtype = dataproduct_subtype
-        self._calib_level = calib_level
-        self._obs_id = obs_id
-        self._access_estsize = access_estsize
-        self._target_name = target_name
-        self._s_ra = s_ra
-        self._s_dec = s_dec
-        self._t_min = t_min
-        self._t_max = t_max
-        self._t_resolution = t_resolution
-        self._t_exptime = t_exptime
-        self._facility_name = facility_name
-        self._instrument_name = instrument_name
-        self._pol_xel = pol_xel
-        self._pol_states = pol_states
-        self._em_xel = em_xel
-        self._em_unit = em_unit
-        self._em_min = em_min
-        self._em_max = em_max
-        self._em_res_power = em_res_power
-        self._em_resolution = em_resolution
-        self._o_ucd = o_ucd
+    """
+    A dataclass to definition of the standard IVOA ObsCore table/view.
+
+    :ivar dataproduct_type: Logical data product type, such as image, cube, spectrum, sed,
+                            timeseries, visibility, event or measurements
+    :vartype dataproduct_type: str
+    :ivar dataproduct_subtype: voltages, oversampled, channelised, quantised voltages
+    :vartype dataproduct_subtype: str
+    :ivar calib_level: Calibration level (0, 1, 2, 3, 4)
+                       0 = Raw instrumental data
+                       1 = Instrumental data in a standard format (FITS, VOTable, SDFITS, ASDM, etc.)
+                       2 = Calibrated, science ready data with the instrument signature removed
+                       3 = Enhanced data products like mosaics, resampled or drizzled images,
+                       or heavily processed survey fields
+                       4 = Analysis data products generated after some scientific data manipulation or
+                       interpretation.
+    :vartype calib_level: str
+    :ivar obs_id: scan id
+    :vartype obs_id: str
+    :ivar access_estsize: value derived from the recorded data files upon stop_scan()
+    :vartype access_estsize: str
+    :ivar target_name: Astronomical object observed
+    :vartype target_name: str
+    :ivar s_ra: Centre of observation right ascension, ICRS
+    :vartype s_ra: str
+    :ivar s_dec: Centre of observation declination, ICRS
+    :vartype s_dec: str
+    :ivar t_min: Start time in MJD
+    :vartype t_min: str
+    :ivar t_max: Stop time in MJD
+    :vartype t_max: str
+    :ivar t_resolution: Temporal resolution FWHM (full width at half maximum)
+    :vartype t_resolution: str
+    :ivar t_exptime: Total exposure time.
+    :vartype t_exptime: str
+    :ivar facility_name: The observatory or facility used to collect the data
+    :vartype facility_name: str
+    :ivar instrument_name: The name of the instrument used for the acquisition of the observation
+    :vartype instrument_name: str
+    :ivar pol_xel: Number of polarization samples
+    :vartype pol_xel: str
+    :ivar pol_states: List of polarization states
+    :vartype pol_states: str
+    :ivar em_xel: Number of elements along the spectral axis
+    :vartype em_xel: str
+    :ivar em_unit: Spectral coordinates unit type. Defaults to Hz.
+    :vartype em_unit: str
+    :ivar em_min: Start in spectral coordinates (vacuum wavelength)
+    :vartype em_min: str
+    :ivar em_max: Stop in spectral coordinates (vacuum wavelength)
+    :vartype em_max: str
+    :ivar em_res_power: Spectral resolving power
+    :vartype em_res_power: str
+    :ivar em_resolution: Spectral resolution
+    :vartype em_resolution: str
+    :ivar o_ucd: Unified Content Descriptor of observable e.g. phot.count or phot.flux.density
+                 see section 4.18 and B.6.4.1 in Obscore standard,
+                 UCD1+ controlled vocabulary and especially list of observables),
+                 not really anything suitable for PST.
+    :vartype o_ucd: str
+    """
+
+    dataproduct_type: str = field(default="timeseries")
+    dataproduct_subtype: str = field(default="voltages")
+    calib_level: str = field(default="0")
+    obs_id: str = field(default="")
+    access_estsize: str = field(default="")
+    target_name: str = field(default="")
+    s_ra: str = field(default="")
+    s_dec: str = field(default="")
+    t_min: str = field(default="")
+    t_max: str = field(default="")
+    t_resolution: str = field(default="")
+    t_exptime: str = field(default="")
+    facility_name: str = field(default="SKA-Observatory")
+    instrument_name: str = field(default="")
+    pol_xel: str = field(default="")
+    pol_states: str = field(default="")
+    em_xel: str = field(default="")
+    em_unit: str = field(default="Hz")
+    em_min: str = field(default="")
+    em_max: str = field(default="")
+    em_res_power: str = field(default="")
+    em_resolution: str = field(default="")
+    o_ucd: str = field(default="null")
 
     def to_dict(self: PstObsCore) -> Dict[str, str]:
+        """Get the object properties in dict format."""
         return {
-            "dataproduct_type": self._dataproduct_type,
-            "dataproduct_subtype": self._dataproduct_subtype,
-            "calib_level": self._calib_level,
-            "obs_id": self._obs_id,
-            "access_estsize": self._access_estsize,
-            "target_name": self._target_name,
-            "s_ra": self._s_ra,
-            "s_dec": self._s_dec,
-            "t_min": self._t_min,
-            "t_max": self._t_max,
-            "t_resolution": self._t_resolution,
-            "t_exptime": self._t_exptime,
-            "facility_name": self._facility_name,
-            "instrument_name": self._instrument_name,
-            "pol_xel": self._pol_xel,
-            "pol_states": self._pol_states,
-            "em_xel": self._em_xel,
-            "em_unit": self._em_unit,
-            "em_min": self._em_min,
-            "em_max": self._em_max,
-            "em_res_power": self._em_res_power,
-            "em_resolution": self._em_resolution,
-            "o_ucd": self._o_ucd,
+            "dataproduct_type": self.dataproduct_type,
+            "dataproduct_subtype": self.dataproduct_subtype,
+            "calib_level": self.calib_level,
+            "obs_id": self.obs_id,
+            "access_estsize": self.access_estsize,
+            "target_name": self.target_name,
+            "s_ra": self.s_ra,
+            "s_dec": self.s_dec,
+            "t_min": self.t_min,
+            "t_max": self.t_max,
+            "t_resolution": self.t_resolution,
+            "t_exptime": self.t_exptime,
+            "facility_name": self.facility_name,
+            "instrument_name": self.instrument_name,
+            "pol_xel": self.pol_xel,
+            "pol_states": self.pol_states,
+            "em_xel": self.em_xel,
+            "em_unit": self.em_unit,
+            "em_min": self.em_min,
+            "em_max": self.em_max,
+            "em_res_power": self.em_res_power,
+            "em_resolution": self.em_resolution,
+            "o_ucd": self.o_ucd,
         }
 
-    @property
-    def dataproduct_type(self):
-        return self._dataproduct_type
 
-    @property
-    def dataproduct_subtype(self):
-        return self._dataproduct_subtype
+@dataclass
+class PstMetaData:
+    """Class representing the PST metadata.
 
-    @property
-    def calib_level(self):
-        return self._calib_level
+    This class encapsulates the metadata information for a PST (Processing Science Target)
+    data product. It includes details about the interface, execution block, context,
+    configuration, files, and observation core information.
 
-    @property
-    def obs_id(self):
-        return self._obs_id
+    :ivar interface: The interface of the metadata.
+    :vartype interface: str
 
-    @property
-    def access_estsize(self):
-        return self._access_estsize
+    :ivar execution_block: The execution block identifier.
+    :vartype execution_block: str
 
-    @property
-    def target_name(self):
-        return self._target_name
+    :ivar context: The context information for the PST data.
+    :vartype context: PstContext
 
-    @property
-    def s_ra(self):
-        return self._s_ra
+    :ivar config: The configuration information for the PST data.
+    :vartype config: PstConfig
 
-    @property
-    def s_dec(self):
-        return self._s_dec
+    :ivar files: List of files associated with the PST data.
+    :vartype files: List[PstFiles]
 
-    @property
-    def t_min(self):
-        return self._t_min
+    :ivar obscore: The observation core information for the PST data.
+    :vartype obscore: PstObsCore
+    """
 
-    @property
-    def t_max(self):
-        return self._t_max
+    interface: str = field(default="")
+    execution_block: str = field(default="")
+    context: PstContext = field(default_factory=PstContext)
+    config: PstConfig = field(default_factory=PstConfig)
+    files: List[PstFiles] = field(default_factory=list)
+    obscore: PstObsCore = field(default_factory=PstObsCore)
 
-    @property
-    def t_resolution(self):
-        return self._t_resolution
-
-    @property
-    def t_exptime(self):
-        return self._t_exptime
-
-    @property
-    def facility_name(self):
-        return self._facility_name
-
-    @property
-    def instrument_name(self):
-        return self._instrument_name
-
-    @property
-    def pol_xel(self):
-        return self._pol_xel
-
-    @property
-    def pol_states(self):
-        return self._pol_states
-
-    @property
-    def em_xel(self):
-        return self._em_xel
-
-    @property
-    def em_unit(self):
-        return self._em_unit
-
-    @property
-    def em_min(self):
-        return self._em_min
-
-    @property
-    def em_max(self):
-        return self._em_max
-
-    @property
-    def em_res_power(self):
-        return self._em_res_power
-
-    @property
-    def em_resolution(self):
-        return self._em_resolution
-
-    @property
-    def o_ucd(self):
-        return self._o_ucd
-
-
-class PstMetadata:
-    def __init__(
-        self: PstMetadata,
-        interface: str = "",
-        execution_block: str = "",
-        context=PstContext,
-        config=PstConfig,
-        obscore=PstObsCore,
-    ) -> None:
-        self._interface = interface
-        self._execution_block = execution_block
-        self._context = context
-        self._config = config
-        self._files = [
-            PstFiles(
-                description="Channelised voltage data raw files",
-                path="data",
-                size="",
-                status="done",
-            ),
-            PstFiles(
-                description="Channelised weights data raw files",
-                path="weights",
-                size="",
-                status="done",
-            ),
-        ]
-        self._obscore = obscore
-
-    # Properties with setters
-    @property
-    def interface(self) -> str:
-        return self._interface
-
-    @interface.setter
-    def interface(self, value: str) -> None:
-        self._interface = str(value)
-
-    @property
-    def execution_block(self) -> str:
-        return self._execution_block
-
-    @execution_block.setter
-    def execution_block(self, value: str) -> None:
-        self._execution_block = str(value)
-
-    @property
-    def context(self) -> PstContext:
-        return self._context
-
-    @context.setter
-    def context(self, value: PstContext) -> None:
-        self._context = value
-
-    @property
-    def config(self) -> PstConfig:
-        return self._config
-
-    @config.setter
-    def config(self, value: PstConfig) -> None:
-        self._config = value
-
-    @property
-    def files(self) -> List[PstFiles]:
-        return self._files
-
-    @files.setter
-    def files(self, value: List[PstFiles]) -> None:
-        if not isinstance(value, list):
-            raise ValueError("Files must be a list.")
-        for item in value:
-            if not isinstance(item, PstFiles):
-                raise ValueError(
-                    "Each element of files must be an instance of PstFiles."
-                )
-        self._files = value
-
-    @property
-    def obscore(self) -> PstObsCore:
-        return self._obscore
-
-    @obscore.setter
-    def obscore(self, value: PstObsCore) -> None:
-        if not isinstance(value, PstObsCore):
-            raise ValueError("Obscore must be an instance of PstObsCore.")
-        self._obscore = value
-
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self: PstMetaData) -> Dict[str, Any]:
+        """Get the object properties in dict format."""
         return {
             "interface": self.interface,
             "execution_block": self.execution_block,
@@ -403,11 +269,13 @@ class PstMetadata:
             "obscore": self.obscore.to_dict(),
         }
 
-    def to_yaml(self) -> str:
+    def to_yaml(self: PstMetaData) -> str:
+        """Get the object properties in yaml representation in string format."""
         metadata_dict = self.to_dict()
         return yaml.dump(metadata_dict)
 
     @property
-    def yaml_object(self) -> yaml.YAMLObject:
+    def yaml_object(self: PstMetaData) -> yaml.YAMLObject:
+        """Get the object properties as a yaml object."""
         metadata_dict = self.to_dict()
         return yaml.load(yaml.dump(metadata_dict), Loader=yaml.SafeLoader)

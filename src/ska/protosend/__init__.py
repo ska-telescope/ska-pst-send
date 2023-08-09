@@ -10,11 +10,8 @@ __email__ = ["jesmigel.developer@gmail.com"]
 
 import logging
 
-from .example import SKA, function_example
 from .metadata_builder import MetaDataBuilder
 
-logger = logging.getLogger("ska-pst-protosend")
+logger = logging.getLogger("ska_pst_protosend")
 
-print(f"SKA.example: {SKA.example}")
-print(f"function_example: {function_example}")
-print(f"{MetaDataBuilder()}")
+logger.info(f"{MetaDataBuilder()}")

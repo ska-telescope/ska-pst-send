@@ -27,10 +27,20 @@ Functions
 
 Classes
 -------
-.. autoclass:: ska.protosend.SKA
+
+.. autoclass:: ska.protosend.metadata.PstContext
     :members:
 
-.. autoclass:: ska.protosend.metadata.PstMetadata
+.. autoclass:: ska.protosend.metadata.PstConfig
+    :members:
+
+.. autoclass:: ska.protosend.metadata.PstFiles
+    :members:
+
+.. autoclass:: ska.protosend.metadata.PstObsCore
+    :members:
+
+.. autoclass:: ska.protosend.metadata.PstMetaData
     :members:
 
 .. autoclass:: ska.protosend.metadata_builder.MetaDataBuilder

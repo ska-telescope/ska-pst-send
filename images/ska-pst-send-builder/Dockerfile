@@ -15,6 +15,7 @@ LABEL \
 # COPY repository to container filesystem
 COPY . /mnt/ska-pst-send
 WORKDIR /mnt/ska-pst-send
+RUN mv pip.conf /etc/
 RUN apt-get update -y && apt-get install -y make
 
 # Install common apt dependencies
@@ -28,7 +29,10 @@ RUN stat ${PKG_CLI_PAYLOAD} \
 # Install poetry as a binary
 ENV POETRY_HOME=/opt/poetry
 ARG POETRY_VERSION=""
-RUN curl -sSL https://install.python-poetry.org | python3 - --yes
+
+# Intermittent sSL connection error encountered
+# RUN curl -sSL https://install.python-poetry.org | python3 - --yes
+RUN python3 install-poetry.py
 
 RUN ln -sfn /usr/bin/python3 /usr/bin/python && \
     ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry && \

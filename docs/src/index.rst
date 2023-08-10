@@ -29,14 +29,12 @@
 ..
 
 .. toctree::
-  :maxdepth: 2
-  :caption: Package name
-  :hidden:
+  :caption: ska-pst-protosend
 
   package/guide
 
 
-Project-name documentation HEADING
+SKA-PST-PROTOSEND
 ==================================
 
 These are all the packages, functions and scripts that form part of the project.

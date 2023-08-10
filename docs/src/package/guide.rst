@@ -4,9 +4,9 @@
 .. todo::
     - Insert todo's here
 
-**************************
-Package-name documentation
-**************************
+*******************************
+SKA-PST-PROTOSEND documentation
+*******************************
 
 This section describes requirements and guidelines.
 
@@ -22,11 +22,26 @@ Public API Documentation
 Functions
 ---------
 
-.. automodule:: ska.protosend
+.. automodule:: ska_pst_send
     :members:
 
 Classes
 -------
-.. autoclass:: ska.protosend.SKA
-    :noindex:
+
+.. autoclass:: ska_pst_send.metadata.PstContext
+    :members:
+
+.. autoclass:: ska_pst_send.metadata.PstConfig
+    :members:
+
+.. autoclass:: ska_pst_send.metadata.PstFiles
+    :members:
+
+.. autoclass:: ska_pst_send.metadata.PstObsCore
+    :members:
+
+.. autoclass:: ska_pst_send.metadata.PstMetaData
+    :members:
+
+.. autoclass:: ska_pst_send.metadata_builder.MetaDataBuilder
     :members:

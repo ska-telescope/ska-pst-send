@@ -32,9 +32,6 @@ PST_OCI_SEND_RUNTIME_TAG	:=22.04
 PST_SEND_OCI_RUNTIME		:=$(PST_OCI_SEND_RUNTIME_IMAGE):$(PST_OCI_SEND_RUNTIME_TAG)
 OCI_BUILD_ADDITIONAL_ARGS	= --build-arg SEND_BASE_IMAGE=$(SEND_BASE_IMAGE) --build-arg SEND_BUILDER=$(PST_OCI_SEND_BUILDER) --build-arg SEND_RUNTIME=$(PST_SEND_OCI_RUNTIME)
 
-python-pre-lint:
-	pip install isort black flake8 pylint-junit pytest build
-
 docs-pre-build:
 	pip install -r docs/requirements.txt
 
@@ -49,3 +46,18 @@ local-pkg-install:
 
 OCI_IMAGES = ska-pst-send-builder ska-pst-send
 OCI_IMAGE_BUILD_CONTEXT= $(PWD)
+
+
+# E203 and W503 conflict with black
+PYTHON_TEST_FILE = tests
+## Paths containing python to be formatted and linted
+PYTHON_LINT_TARGET = src/ tests/
+PYTHON_LINE_LENGTH = 110
+
+PYTHON_SWITCHES_FOR_FLAKE8 = --extend-ignore=BLK,T --enable=DAR104 --ignore=E203,FS003,W503,N802 --max-complexity=10 \
+    --rst-roles=py:attr,py:class,py:const,py:exc,py:func,py:meth,py:mod \
+		--rst-directives deprecated,uml --exclude=src/ska_pst_lmc_proto
+PYTHON_SWITCHES_FOR_BLACK = --force-exclude=src/ska_pst_lmc_proto
+PYTHON_SWITCHES_FOR_ISORT = --skip-glob="*/__init__.py" --py 39 --thirdparty=ska_pst_lmc_proto
+PYTHON_SWITCHES_FOR_PYLINT = --disable=W,C,R --ignored-modules="ska_pst_lmc_proto"
+PYTHON_SWITCHES_FOR_AUTOFLAKE ?= --in-place --remove-unused-variables --remove-all-unused-imports --recursive --ignore-init-module-imports

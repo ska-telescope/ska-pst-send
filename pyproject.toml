@@ -1,15 +1,35 @@
 [tool.poetry]
-name = "protosend"
+name = "ska-pst-send"
 version = "0.0.0"
 description = ""
 authors = ["Jesmigel A. Cantos <jesmigel.developer@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+astropy = "^5.3.1"
+pyyaml = "^6.0.1"
 
-[tool.poetry.dev-dependencies]
-pytest = "^6.2"
+[tool.poetry.group.dev.dependencies]
+autoflake = "^1.4"
+black = "^22.1.0"
+coverage = "^6.3.2"
+flake8 = "^6.1.0"
+flake8-black = "^0.3.2"
+flake8-docstrings = "^1.6.0"
+flake8-formatter-junit-xml = "^0.0.6"
+flake8-rst-docstrings = "^0.2.5"
+isort = "^5.12.0"
+mypy = "^1.4.1"
+nptyping = "^2.5.0"
+pylint = "^2.8.3"
+pylint-junit = "^0.3.2"
+pytest = "^6.2.0"
+pytest-pylint = "^0.18.0"
 pytest-cov = "^3.0.0"
+
+[[tool.poetry.source]]
+name = 'ska-nexus'
+url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

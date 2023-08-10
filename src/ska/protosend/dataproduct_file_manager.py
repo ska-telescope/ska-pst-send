@@ -8,12 +8,9 @@
 """Module class for managing DADA files."""
 from __future__ import annotations
 
-import itertools
 import logging
 import mmap
-import os
 import pathlib
-import struct
 from types import TracebackType
 from typing import Any, Dict, List, Tuple
 
@@ -328,15 +325,11 @@ class WeightsFileReader(DadaFileReader):
     def __init__(
         self: WeightsFileReader,
         file: pathlib.Path,
-        unpack_scales: bool = True,
-        unpack_weights: bool = True,
         logger: logging.Logger | None = None,
     ) -> None:
         """Create instance of weights file reader."""
         super().__init__(file, logger=logger)
 
-        self.unpack_scales = unpack_scales
-        self.unpack_weights = unpack_weights
         self._scales: ScalesType | None = None
         self._weights: WeightsType | None = None
 
@@ -441,17 +434,6 @@ class WeightsFileReader(DadaFileReader):
             )
         )
 
-        # scales exist for each heap and packet
-        if self.unpack_scales:
-            self._scales = np.zeros((num_heaps, packets_per_heap), dtype=np.single)
-
-        # weights exist for each heap and channel
-        if self.unpack_weights:
-            self._weights = np.zeros(
-                (num_heaps * self.nweight_per_packet, self.nchan),
-                dtype=np.ushort,
-            )
-
         # no need to assert that nbit % 8 is 0 as
         # we have already asserted it is 16
         nbit_as_bytes = self.nbit // 8
@@ -460,50 +442,6 @@ class WeightsFileReader(DadaFileReader):
                a multiple of {nbit_as_bytes}
                """
         assert self.packet_weights_size % nbit_as_bytes == 0, msg
-        nweights = self.packet_weights_size // nbit_as_bytes
-
-        # if we're not unpacking anything then don't do anything.
-        if self.unpack_scales or self.unpack_weights:
-            self._unpack_weights_data(file, packets_per_heap, num_heaps, nweights)
-
-    def _unpack_weights_data(
-        self: WeightsFileReader,
-        file: mmap.mmap,
-        packets_per_heap: int,
-        num_heaps: int,
-        nweights: int,
-    ) -> None:
-        """Unpacks the weights data for current file."""
-        byte_offset = 0
-        heap_range = range(num_heaps)
-        packet_range = range(packets_per_heap)
-        for heap, packet in itertools.product(heap_range, packet_range):
-            if byte_offset >= self.data_size:
-                return
-
-            if self.unpack_scales:
-                # packet scale factor is stored as 32-bit float
-                self._scales[heap][packet] = struct.unpack(  # type: ignore
-                    "f", file.read(self.packet_scales_size)
-                )[0]
-            else:
-                file.seek(self.packet_scales_size, os.SEEK_CUR)
-            byte_offset += self.packet_scales_size
-
-            if self.unpack_weights:
-                # weights are stored as unsigned 16-bit integers
-                packet_weights = struct.unpack(f"{nweights}H", file.read(self.packet_weights_size))
-
-                channel_range = range(self.nchan_per_packet)
-                weight_range = range(self.nweight_per_packet)
-                # transpose is required
-                for idx, (channel, weight) in enumerate(itertools.product(channel_range, weight_range)):
-                    osamp = heap * self.nweight_per_packet + weight
-                    ochan = packet * self.nchan_per_packet + channel
-                    self._weights[osamp][ochan] = packet_weights[idx]
-            else:
-                file.seek(self.packet_weights_size, os.SEEK_CUR)
-            byte_offset += self.packet_weights_size
 
     def get_udp_format_config(udp_format: str) -> dict:
         """Get the UDP format configuration.
@@ -545,20 +483,6 @@ class WeightsFileReader(DadaFileReader):
                """
         assert udp_format in UDP_FORMAT_CONFIG, msg
         return UDP_FORMAT_CONFIG[udp_format]
-
-    @property
-    def scales(self: WeightsFileReader) -> ScalesType:
-        """Return the unpacked scales."""
-        if not self.unpack_scales:
-            raise RuntimeError("Cannot return scales as they were not unpacked from the file.")
-        return self._scales  # type: ignore
-
-    @property
-    def weights(self: WeightsFileReader) -> WeightsType:
-        """Return the unpacked weights."""
-        if not self.unpack_weights:
-            raise RuntimeError("Cannot return weights. They were not unpacked from the file.")
-        return self._weights  # type: ignore
 
     @property
     def dropped_packets(self: WeightsFileReader) -> np.ndarray:

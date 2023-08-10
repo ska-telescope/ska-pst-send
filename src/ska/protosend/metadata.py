@@ -8,8 +8,8 @@
 """Module class for structure used for writing YAML meta data files."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from dataclasses import asdict, dataclass, field
+from typing import List
 
 import yaml
 
@@ -42,14 +42,6 @@ class PstContext:
     intent: str = field(default="Tied-array beam observation")
     notes: str = field(default="")
 
-    def to_dict(self: PstContext) -> Dict[str, str]:
-        """Get the object properties in dict format."""
-        return {
-            "observer": self.observer,
-            "intent": self.intent,
-            "notes": self.notes,
-        }
-
 
 @dataclass
 class PstConfig:
@@ -66,13 +58,6 @@ class PstConfig:
 
     image: str = field(default="")
     version: str = field(default="")
-
-    def to_dict(self: PstConfig) -> Dict[str, str]:
-        """Get the object properties in dict format."""
-        return {
-            "image": self.image,
-            "version": self.version,
-        }
 
 
 @dataclass
@@ -96,15 +81,6 @@ class PstFiles:
     path: str = field(default="")
     size: str = field(default="")
     status: str = field(default="done")
-
-    def to_dict(self: PstFiles) -> Dict[str, str]:
-        """Get the object properties in dict format."""
-        return {
-            "description": self.description,
-            "path": self.path,
-            "size": self.size,
-            "status": self.status,
-        }
 
 
 @dataclass
@@ -195,34 +171,6 @@ class PstObsCore:
     em_resolution: str = field(default="")
     o_ucd: str = field(default="null")
 
-    def to_dict(self: PstObsCore) -> Dict[str, str]:
-        """Get the object properties in dict format."""
-        return {
-            "dataproduct_type": self.dataproduct_type,
-            "dataproduct_subtype": self.dataproduct_subtype,
-            "calib_level": self.calib_level,
-            "obs_id": self.obs_id,
-            "access_estsize": self.access_estsize,
-            "target_name": self.target_name,
-            "s_ra": self.s_ra,
-            "s_dec": self.s_dec,
-            "t_min": self.t_min,
-            "t_max": self.t_max,
-            "t_resolution": self.t_resolution,
-            "t_exptime": self.t_exptime,
-            "facility_name": self.facility_name,
-            "instrument_name": self.instrument_name,
-            "pol_xel": self.pol_xel,
-            "pol_states": self.pol_states,
-            "em_xel": self.em_xel,
-            "em_unit": self.em_unit,
-            "em_min": self.em_min,
-            "em_max": self.em_max,
-            "em_res_power": self.em_res_power,
-            "em_resolution": self.em_resolution,
-            "o_ucd": self.o_ucd,
-        }
-
 
 @dataclass
 class PstMetaData:
@@ -258,24 +206,13 @@ class PstMetaData:
     files: List[PstFiles] = field(default_factory=list)
     obscore: PstObsCore = field(default_factory=PstObsCore)
 
-    def to_dict(self: PstMetaData) -> Dict[str, Any]:
-        """Get the object properties in dict format."""
-        return {
-            "interface": self.interface,
-            "execution_block": self.execution_block,
-            "context": self.context.to_dict(),
-            "config": self.config.to_dict(),
-            "files": [file.to_dict() for file in self.files],
-            "obscore": self.obscore.to_dict(),
-        }
-
     def to_yaml(self: PstMetaData) -> str:
         """Get the object properties in yaml representation in string format."""
-        metadata_dict = self.to_dict()
+        metadata_dict = asdict(self)
         return yaml.dump(metadata_dict)
 
     @property
     def yaml_object(self: PstMetaData) -> yaml.YAMLObject:
         """Get the object properties as a yaml object."""
-        metadata_dict = self.to_dict()
+        metadata_dict = asdict(self)
         return yaml.load(yaml.dump(metadata_dict), Loader=yaml.SafeLoader)

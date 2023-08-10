@@ -15,6 +15,7 @@ __all__ = [
 import logging
 import os
 import pathlib
+from dataclasses import asdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -249,7 +250,7 @@ class MetaDataBuilder:
         """Write YAML object to a YAML file."""
         absolute_path = f"{self._dsp_mount_path}/{file_name}"
         with open(absolute_path, "w") as yaml_file:
-            yaml.dump(self.pst_metadata.to_dict(), yaml_file)
+            yaml.dump(asdict(self.pst_metadata), yaml_file)
 
     @property
     def dada_file_manager(self: MetaDataBuilder) -> DadaFileManager:

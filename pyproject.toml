@@ -27,6 +27,10 @@ pytest = "^6.2.0"
 pytest-pylint = "^0.18.0"
 pytest-cov = "^3.0.0"
 
+[[tool.poetry.source]]
+name = 'ska-nexus'
+url = 'https://artefact.skao.int/repository/pypi-internal/simple'
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

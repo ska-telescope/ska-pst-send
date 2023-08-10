@@ -15,6 +15,7 @@ LABEL \
 # COPY repository to container filesystem
 COPY . /mnt/ska-pst-send
 WORKDIR /mnt/ska-pst-send
+RUN mv pip.conf /etc/
 RUN apt-get update -y && apt-get install -y make
 
 # Install common apt dependencies

@@ -22,7 +22,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../../src"))
 
 autodoc_mock_imports = [
-    "ska",
+    "ska_pst_send",
 ]
 import sphinx_rtd_theme
 

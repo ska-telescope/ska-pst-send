@@ -22,26 +22,26 @@ Public API Documentation
 Functions
 ---------
 
-.. automodule:: src.ska.protosend
+.. automodule:: ska_pst_send
     :members:
 
 Classes
 -------
 
-.. autoclass:: ska.protosend.metadata.PstContext
+.. autoclass:: ska_pst_send.metadata.PstContext
     :members:
 
-.. autoclass:: ska.protosend.metadata.PstConfig
+.. autoclass:: ska_pst_send.metadata.PstConfig
     :members:
 
-.. autoclass:: ska.protosend.metadata.PstFiles
+.. autoclass:: ska_pst_send.metadata.PstFiles
     :members:
 
-.. autoclass:: ska.protosend.metadata.PstObsCore
+.. autoclass:: ska_pst_send.metadata.PstObsCore
     :members:
 
-.. autoclass:: ska.protosend.metadata.PstMetaData
+.. autoclass:: ska_pst_send.metadata.PstMetaData
     :members:
 
-.. autoclass:: ska.protosend.metadata_builder.MetaDataBuilder
+.. autoclass:: ska_pst_send.metadata_builder.MetaDataBuilder
     :members:

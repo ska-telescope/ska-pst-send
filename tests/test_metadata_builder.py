@@ -10,8 +10,8 @@ import os
 
 import yaml
 
-from ska.protosend.metadata import PstConfig, PstContext, PstFiles, PstMetaData, PstObsCore
-from ska.protosend.metadata_builder import MetaDataBuilder
+from ska_pst_send.metadata import PstConfig, PstContext, PstFiles, PstMetaData, PstObsCore
+from ska_pst_send.metadata_builder import MetaDataBuilder
 
 
 def test_metadata_schema():

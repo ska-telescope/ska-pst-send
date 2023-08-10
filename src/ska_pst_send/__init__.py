@@ -12,6 +12,6 @@ import logging
 
 from .metadata_builder import MetaDataBuilder
 
-logger = logging.getLogger("ska_pst_protosend")
+logger = logging.getLogger("ska_pst_send")
 
 logger.info(f"{MetaDataBuilder()}")

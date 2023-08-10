@@ -6,7 +6,7 @@
 # See LICENSE for more info.
 
 """Tests for the PstMetaData class."""
-from ska.protosend.metadata import PstConfig, PstContext, PstMetaData, PstObsCore
+from ska_pst_send.metadata import PstConfig, PstContext, PstMetaData, PstObsCore
 
 
 def test_metadata_field_objects():

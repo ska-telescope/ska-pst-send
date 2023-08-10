@@ -35,7 +35,11 @@ WeightsType = npt.NDArray[Any, npt.UShort]
 
 
 class DadaFileManager:
-    """Class that captures PST data files."""
+    """Class that captures PST data files.
+
+    Parses attributes from a set of PST voltage recorder data and weights files and computes some of the
+    derived quantities from the scales and weights, such as the inferred number of dropped/invalid packets.
+    """
 
     def __init__(
         self: DadaFileManager,
@@ -62,12 +66,10 @@ class DadaFileManager:
             weights_paths
         ), f"data_paths {len(data_paths)}!=weights_paths {len(weights_paths)}"
 
-        data_paths.reverse()
-        data_files = []
-        weights_files = []
-        for i in range(0, len(data_paths)):
-            data_files.append(DadaFileReader(data_paths[i]))
-            weights_files.append(WeightsFileReader(weights_paths[i]))
+        data_paths.sort()
+        weights_paths.sort()
+        data_files = [DadaFileReader(f) for f in data_paths]
+        weights_files = [DadaFileReader(f) for f in weights_paths]
 
         self._data_files = data_files
         self._weights_files = weights_files

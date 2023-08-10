@@ -21,10 +21,6 @@ def test_metadata_schema():
 
 
 """
-TODO: test read and compare data from header or weights file
-TODO: test contents of context
-TODO: test contents of config
-TODO: test contents of obscore
 TODO: test compute values involving multiple dada files
 """
 

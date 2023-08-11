@@ -28,7 +28,7 @@ RUN stat ${PKG_CLI_PAYLOAD} \
 
 # Install poetry as a binary
 ENV POETRY_HOME=/opt/poetry
-ARG POETRY_VERSION=""
+ARG POETRY_VERSION="1.2.2"
 
 # Intermittent sSL connection error encountered
 # RUN curl -sSL https://install.python-poetry.org | python3 - --yes

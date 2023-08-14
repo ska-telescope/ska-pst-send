@@ -31,6 +31,9 @@ pytest-cov = "^3.0.0"
 name = 'ska-nexus'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 
+[tool.poetry.scripts]
+sdp_transfer = "ska_pst_send.sdp_transfer:main"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

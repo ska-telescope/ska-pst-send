@@ -128,7 +128,9 @@ class DadaFileReader:
             self._header = header
             return header
 
-    def _read_header_from_mmap(self: DadaFileReader, file: mmap.mmap) -> Tuple[Dict[str, str], str]:
+    def _read_header_from_mmap(
+        self: DadaFileReader, file: mmap.mmap
+    ) -> Tuple[Dict[str, str], str]:
         """Read the lines of the memory mapped file into a dictionary."""
         header: Dict[str, str] = {}
 
@@ -149,7 +151,9 @@ class DadaFileReader:
             header_str += "\n"
 
             [key, value] = line.lstrip().split(" ", maxsplit=1)
-            assert len(key) > 0, f"Expected header key of line {str(currline)} to not be empty"
+            assert (
+                len(key) > 0
+            ), f"Expected header key of line {str(currline)} to not be empty"
             header[key] = value.lstrip()
 
         return header, header_str
@@ -315,7 +319,11 @@ MID_BAND_CONFIG = {
 # Band 5a and 5b have the same udp_format
 UDP_FORMAT_CONFIG = {
     "LowPST": LOW_BAND_CONFIG,
-    **{config["udp_format"]: config for (freq_band, config) in MID_BAND_CONFIG.items() if freq_band != "5b"},
+    **{
+        config["udp_format"]: config
+        for (freq_band, config) in MID_BAND_CONFIG.items()
+        if freq_band != "5b"
+    },
 }
 
 
@@ -371,11 +379,15 @@ class WeightsFileReader(DadaFileReader):
         self.logger.debug(f"computed weights per packet as {self.nweight_per_packet}")
 
         # compute the number of channels in each packet
-        assert self.packet_weights_size % (self.nweight_per_packet * self.nbit // 8) == 0, (
+        assert (
+            self.packet_weights_size % (self.nweight_per_packet * self.nbit // 8) == 0
+        ), (
             f"Expected packet_weights_size={self.packet_weights_size} to be a "
             f"multiple of {self.nweight_per_packet * self.nbit // 8}"
         )
-        self.nchan_per_packet = self.packet_weights_size // (self.nweight_per_packet * self.nbit // 8)
+        self.nchan_per_packet = self.packet_weights_size // (
+            self.nweight_per_packet * self.nbit // 8
+        )
         msg = f"""
                packet_weights_size={self.packet_weights_size}
                nweight_per_packet={self.nweight_per_packet}

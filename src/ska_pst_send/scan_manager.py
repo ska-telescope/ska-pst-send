@@ -59,14 +59,22 @@ class ScanManager:
 
         # add new scans to the list
         for rel_scan_path in self.get_relative_scan_paths():
-            matches_existing = [x.match_relative_path(rel_scan_path) for x in self._scans]
+            matches_existing = [
+                x.match_relative_path(rel_scan_path) for x in self._scans
+            ]
             if not any(matches_existing):
                 self.logger.debug(f"adding new scan at {str(rel_scan_path)}")
-                self._scans.append(VoltageRecorderScan(self.data_product_path, rel_scan_path, self.logger))
+                self._scans.append(
+                    VoltageRecorderScan(
+                        self.data_product_path, rel_scan_path, self.logger
+                    )
+                )
 
         # remove delete scans from the list
         for scan in self._scans:
-            matches_existing = [scan.match_relative_path(x) for x in self.get_relative_scan_paths()]
+            matches_existing = [
+                scan.match_relative_path(x) for x in self.get_relative_scan_paths()
+            ]
             if not any(matches_existing):
                 self.logger.debug(f"removing scan at {str(rel_scan_path)}")
                 self._scans.remove(scan)
@@ -74,7 +82,9 @@ class ScanManager:
     def get_relative_scan_paths(self: ScanManager) -> List[pathlib.Path]:
         """Return a of the relative scan paths stored in the data_product_path."""
         full_scan_paths = self.get_scan_paths()
-        relative_scan_paths = [os.path.relpath(x, self.data_product_path) for x in full_scan_paths]
+        relative_scan_paths = [
+            os.path.relpath(x, self.data_product_path) for x in full_scan_paths
+        ]
         return relative_scan_paths
 
     def get_scan_paths(self: ScanManager) -> List[pathlib.Path]:

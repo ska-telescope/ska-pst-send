@@ -117,7 +117,10 @@ class VoltageRecorderScan(Scan):
         Return the number of files changed since the previous call to this method
         """
         prev_files_len = (
-            len(self._data_files) + len(self._weights_files) + len(self._stats_files) + len(self._config_files)
+            len(self._data_files)
+            + len(self._weights_files)
+            + len(self._stats_files)
+            + len(self._config_files)
         )
 
         self._data_files = []
@@ -146,11 +149,15 @@ class VoltageRecorderScan(Scan):
             - prev_files_len
         )
 
-    def get_config_file(self: Scan, config_file_path: pathlib.Path) -> VoltageRecorderFile:
+    def get_config_file(
+        self: Scan, config_file_path: pathlib.Path
+    ) -> VoltageRecorderFile:
         """Return a VoltageRecorderFile dataclass object for the config file."""
         file_number = 0
         prefix = self.data_product_path
-        config_file = pathlib.Path(os.path.relpath(config_file_path, self.data_product_path))
+        config_file = pathlib.Path(
+            os.path.relpath(config_file_path, self.data_product_path)
+        )
         file_size = self.get_file_size(config_file_path)
         return VoltageRecorderFile(file_number, prefix, config_file, file_size)
 
@@ -215,20 +222,30 @@ class VoltageRecorderScan(Scan):
         """Delete all the local data files associated with a scan."""
         # TODO decide if a Scan can delete itself
 
-    def get_unprocessed_file(self: Scan) -> Tuple(pathLib.path, pathLib.path, pathLib.path):
+    def get_unprocessed_file(
+        self: Scan,
+    ) -> Tuple(pathLib.path, pathLib.path, pathLib.path):
         """Return a data and weights file that have not yet been processed into a stat file."""
 
         self.update_files()
         for data_file in self._data_files:
-            expected_stat_file = pathlib.Path("stats") / pathlib.Path(f"{data_file.file_name.stem}.h5")
+            expected_stat_file = pathlib.Path("stats") / pathlib.Path(
+                f"{data_file.file_name.stem}.h5"
+            )
             expected_stat_path = self.full_scan_path / expected_stat_file
             if not expected_stat_path.is_file():
                 file_number = self.get_file_number(data_file.file_name)
                 self.logger.debug(f"data_file={data_file} file_number={file_number}")
-                return (self._data_files[file_number], self._weights_files[file_number], expected_stat_file)
+                return (
+                    self._data_files[file_number],
+                    self._weights_files[file_number],
+                    expected_stat_file,
+                )
         return (None, None, None)
 
-    def process_file(self: Scan, unprocessed_file: Tuple(pathLib.path, pathLib.path, pathLib.path)):
+    def process_file(
+        self: Scan, unprocessed_file: Tuple(pathLib.path, pathLib.path, pathLib.path)
+    ):
         """Process the data and weights file to generate a stat file."""
 
         data_file = unprocessed_file[0]
@@ -239,18 +256,34 @@ class VoltageRecorderScan(Scan):
         os.makedirs(os.path.dirname(stats_path), exist_ok=True)
 
         # actual command to execute when the container is setup
-        command = ["ska_pst_stat_file_proc", "-d", str(data_file), "-w", str(weights_file)]
+        command = [
+            "ska_pst_stat_file_proc",
+            "-d",
+            str(data_file),
+            "-w",
+            str(weights_file),
+        ]
         command = ["touch", str(stats_path)]
         # command = ["ls", "-l"]
 
         self.logger.info(f"running command: {command}")
-        completed = subprocess.run(command, cwd=self.full_scan_path, shell=False,
-            stdin=None, capture_output=True)
+        completed = subprocess.run(
+            command,
+            cwd=self.full_scan_path,
+            shell=False,
+            stdin=None,
+            capture_output=True,
+        )
 
-        ok = (completed.returncode == 0)
+        ok = completed.returncode == 0
         if not ok:
             self.logger.warning(f"command {command} failed: {completed}")
         return ok
 
     def get_all_files(self: Scan) -> List[VoltageRecorderFile]:
-        return self._data_files + self._weights_files + self._stats_files + self._config_files
+        return (
+            self._data_files
+            + self._weights_files
+            + self._stats_files
+            + self._config_files
+        )

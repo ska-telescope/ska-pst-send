@@ -48,7 +48,9 @@ class ScanTransfer(threading.Thread):
         self.quit_event = quit_event
         self.logger = logger
         self.continue_transfer = True
-        self.logger.debug(f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}")
+        self.logger.debug(
+            f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}"
+        )
 
     def get_untransferred_files(self: ScanTransfer) -> List[PrioritizedFile]:
         """Return the list of untransferred files for the scan."""
@@ -56,7 +58,9 @@ class ScanTransfer(threading.Thread):
         # update the local and remote scan file lists
         new_local_files = self.local_scan.update_files()
         new_remote_files = self.remote_scan.update_files()
-        self.logger.debug(f"found local={new_local_files} and remote={new_remote_files} files")
+        self.logger.debug(
+            f"found local={new_local_files} and remote={new_remote_files} files"
+        )
 
         local_files = self.local_scan.get_all_files()
         remote_files = self.remote_scan.get_all_files()
@@ -74,9 +78,7 @@ class ScanTransfer(threading.Thread):
 
             if not transferred:
                 untransferred_files.append(
-                    PrioritizedFile(
-                        local.file_number, local.file_name
-                    )
+                    PrioritizedFile(local.file_number, local.file_name)
                 )
 
         return untransferred_files
@@ -103,7 +105,7 @@ class ScanTransfer(threading.Thread):
         self.logger.debug("starting transfer thread")
         local_path = self.local_scan.data_product_path
         remote_path = self.remote_scan.data_product_path
-        
+
         while self.keep_transferring:
 
             untransferred_files = sorted(self.get_untransferred_files())

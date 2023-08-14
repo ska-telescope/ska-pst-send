@@ -11,13 +11,7 @@ import os
 
 import yaml
 
-from ska_pst_send.metadata import (
-    PstConfig,
-    PstContext,
-    PstFiles,
-    PstMetaData,
-    PstObsCore,
-)
+from ska_pst_send.metadata import PstConfig, PstContext, PstFiles, PstMetaData, PstObsCore
 from ska_pst_send.metadata_builder import MetaDataBuilder
 
 

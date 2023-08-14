@@ -13,10 +13,10 @@ import time
 from signal import SIGINT, signal
 from typing import Any
 
+from .scan import VoltageRecorderScan
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
 from .scan_transfer import ScanTransfer
-from .scan import VoltageRecorderScan
 
 
 def process_scans(args: Any) -> None:
@@ -52,7 +52,9 @@ def process_scans(args: Any) -> None:
         local_scan = scan_manager.get_oldest_scan()
 
         # construct a remote scan object for comparison
-        remote_scan = VoltageRecorderScan(remote_path, local_scan.relative_scan_path, logger)
+        remote_scan = VoltageRecorderScan(
+            remote_path, local_scan.relative_scan_path, logger
+        )
 
         # perform post-processing on the scan to generate output files for transfer
         scan_process = ScanProcess(local_scan, quit_event, logger)

@@ -8,10 +8,6 @@
 """Module class for transferring files from the PST server to a remote location."""
 from __future__ import annotations
 
-_all__ = [
-    "ScanTransfer",
-]
-
 import logging
 import os
 import pathlib
@@ -19,28 +15,34 @@ import shutil
 import threading
 import time
 from dataclasses import dataclass, field
+from typing import List
+
+from .scan import VoltageRecorderScan
+
+_all__ = [
+    "ScanTransfer",
+]
 
 
 @dataclass(order=True)
-class PrioritizedFile:
+class PrioritorizedFile:
+    """Data class that provides a filename and a transfer prioritory."""
+
     priority: int
-    file_to_transfer: pathlib.Path = field(compare=False)
+    filename: pathlib.Path = field(compare=False)
 
 
 class ScanTransfer(threading.Thread):
-    """
-    Class used for transferring a PST Scan from local to remote storage.
-    """
+    """Thread to asynchronously transfer PST data product files to remote storage."""
 
     def __init__(
         self: ScanTransfer,
         local_scan: VoltageRecorderScan,
         remote_scan: VoltageRecorderScan,
-        quit_event: Threading.Event,
+        quit_event: threading.Event,
         logger: logging.Logger | None = None,
     ):
         """Initialise the ScanTransfer object."""
-
         threading.Thread.__init__(self)
 
         self.local_scan = local_scan
@@ -48,19 +50,14 @@ class ScanTransfer(threading.Thread):
         self.quit_event = quit_event
         self.logger = logger
         self.continue_transfer = True
-        self.logger.debug(
-            f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}"
-        )
+        self.logger.debug(f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}")
 
-    def get_untransferred_files(self: ScanTransfer) -> List[PrioritizedFile]:
+    def get_untransferred_files(self: ScanTransfer) -> List[PrioritorizedFile]:
         """Return the list of untransferred files for the scan."""
-
         # update the local and remote scan file lists
         new_local_files = self.local_scan.update_files()
         new_remote_files = self.remote_scan.update_files()
-        self.logger.debug(
-            f"found local={new_local_files} and remote={new_remote_files} files"
-        )
+        self.logger.debug(f"found local={new_local_files} and remote={new_remote_files} files")
 
         local_files = self.local_scan.get_all_files()
         remote_files = self.remote_scan.get_all_files()
@@ -77,22 +74,9 @@ class ScanTransfer(threading.Thread):
                 )
 
             if not transferred:
-                untransferred_files.append(
-                    PrioritizedFile(local.file_number, local.file_name)
-                )
+                untransferred_files.append(PrioritorizedFile(local.file_number, local.file_name))
 
         return untransferred_files
-
-    def add_file(self: ScanTransfer, file_to_transfer: PrioritizedItem):
-        """Add a file to the file transfer queue."""
-
-        # check the file resides in the local_path
-        if os.path.commonprefix(self.local_path, file_to_transfer) != self.local_path:
-            raise RuntimeError(
-                f"file to transfer [{file_to_transfer}] did not reside in the local path [{self.local_path}]"
-            )
-
-        self.files_to_transfer.put(file_to_transfer)
 
     @property
     def keep_transferring(self: ScanTransfer):
@@ -101,7 +85,6 @@ class ScanTransfer(threading.Thread):
 
     def run(self: ScanTransfer):
         """Run the transfer for the Scan from local to remote."""
-
         self.logger.debug("starting transfer thread")
         local_path = self.local_scan.data_product_path
         remote_path = self.remote_scan.data_product_path
@@ -115,8 +98,8 @@ class ScanTransfer(threading.Thread):
                 if not self.keep_transferring:
                     continue
 
-                local_file = local_path / untransferred_file.file_to_transfer
-                remote_file = remote_path / untransferred_file.file_to_transfer
+                local_file = local_path / untransferred_file.filename
+                remote_file = remote_path / untransferred_file.filename
 
                 self.logger.debug(f"copying {local_file} to {remote_file}")
                 os.makedirs(os.path.dirname(remote_file), exist_ok=True)

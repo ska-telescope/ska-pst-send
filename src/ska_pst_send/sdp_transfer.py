@@ -5,6 +5,7 @@
 # Distributed under the terms of the BSD 3-clause new license.
 # See LICENSE for more info.
 
+"""Module class for main PST to SDP Transfer application."""
 import logging
 import pathlib
 import sys
@@ -20,8 +21,10 @@ from .scan_transfer import ScanTransfer
 
 
 def process_scans(args: Any) -> None:
-
+    """Primary processing method for the PST to SDP transfer."""
     LOGGING_LEVEL = logging.INFO
+    if args["verbose"]:
+        LOGGING_LEVEL = logging.DEBUG
     LOG_FORMAT = "%(asctime)s : %(levelname)5s : %(msg)s : %(filename)s:%(lineno)s %(funcName)s()"
     logging.basicConfig(format=LOG_FORMAT, level=LOGGING_LEVEL)
 
@@ -52,9 +55,7 @@ def process_scans(args: Any) -> None:
         local_scan = scan_manager.get_oldest_scan()
 
         # construct a remote scan object for comparison
-        remote_scan = VoltageRecorderScan(
-            remote_path, local_scan.relative_scan_path, logger
-        )
+        remote_scan = VoltageRecorderScan(remote_path, local_scan.relative_scan_path, logger)
 
         # perform post-processing on the scan to generate output files for transfer
         scan_process = ScanProcess(local_scan, quit_event, logger)
@@ -74,7 +75,7 @@ def process_scans(args: Any) -> None:
             time.sleep(1)
         scan_transfer.join()
 
-        all_processed = scan_process.get_unprocessed_file() == None
+        all_processed = scan_process.get_unprocessed_file() is None
         all_transferred = len(scan_transfer.get_untransferred_files()) == 0
         logger.debug(
             f"scan={local_scan.relative_scan_path} processed={all_processed} "
@@ -90,7 +91,6 @@ def process_scans(args: Any) -> None:
 
 def main() -> None:
     """Parse command line arguments and execute the main processing loop."""
-
     import argparse
     import sys
     import traceback
@@ -114,6 +114,7 @@ def main() -> None:
         default="http://127.0.0.1:8888",
         help="endpoint for the SDP Data Product Dashboard REST API",
     )
+    p.add_argument("--verbose", action="store_true")
 
     args = vars(p.parse_args())
     try:

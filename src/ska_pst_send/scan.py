@@ -15,7 +15,7 @@ import subprocess
 from dataclasses import dataclass, field
 from typing import List, Tuple
 
-from .metadata_builder import MetaDataBuilder
+from .metadata_builder import DadaFileManager, MetaDataBuilder
 
 __all__ = [
     "Scan",
@@ -23,9 +23,7 @@ __all__ = [
 
 
 class Scan:
-    """
-    Base class for representing Data Products from PST Scans that are stored on the local file system.
-    """
+    """Base class for representing Data Products from PST Scans that are stored on the local file system."""
 
     def __init__(
         self: Scan,
@@ -90,21 +88,21 @@ class VoltageRecorderFile:
 
 
 class VoltageRecorderScan(Scan):
-    """
-    Class representing PST Voltage Recoder Data Products for a Scan.
-    """
+    """Class representing PST Voltage Recoder Data Products for a Scan."""
 
     def __init__(
         self: VoltageRecorderScan,
         data_product_path: pathlib.Path,
-        full_scan_path: pathlib.Path,
+        relative_scan_path: pathlib.Path,
         logger: logging.Logger | None = None,
     ) -> None:
-        """Init object.
+        """Initialise a Voltage Recorder Scan object.
 
-        param scan_path: The absolute path for the scan
+        param data_product_path: base path to the /product directory
+        param relative_scan_path: path of the scan relative to the data_product_path
+        param logger: python logging instance
         """
-        Scan.__init__(self, data_product_path, full_scan_path, logger)
+        Scan.__init__(self, data_product_path, relative_scan_path, logger)
 
         self._data_files: List[VoltageRecorderFile] = []
         self._weights_files: List[VoltageRecorderFile] = []
@@ -114,7 +112,8 @@ class VoltageRecorderScan(Scan):
 
     def update_files(self: Scan) -> int:
         """Check the file system for new data, weights and stats files.
-        Return the number of files changed since the previous call to this method
+
+        Returns the number of files changed since the previous call to this method
         """
         prev_files_len = (
             len(self._data_files)
@@ -149,23 +148,16 @@ class VoltageRecorderScan(Scan):
             - prev_files_len
         )
 
-    def get_config_file(
-        self: Scan, config_file_path: pathlib.Path
-    ) -> VoltageRecorderFile:
+    def get_config_file(self: Scan, config_file_path: pathlib.Path) -> VoltageRecorderFile:
         """Return a VoltageRecorderFile dataclass object for the config file."""
         file_number = 0
         prefix = self.data_product_path
-        config_file = pathlib.Path(
-            os.path.relpath(config_file_path, self.data_product_path)
-        )
+        config_file = pathlib.Path(os.path.relpath(config_file_path, self.data_product_path))
         file_size = self.get_file_size(config_file_path)
         return VoltageRecorderFile(file_number, prefix, config_file, file_size)
 
-    def get_voltage_recorder_file(
-        self: Scan, data_file: pathlib.Path
-    ) -> VoltageRecorderFile:
+    def get_voltage_recorder_file(self: Scan, data_file: pathlib.Path) -> VoltageRecorderFile:
         """Return a VoltageRecorderFile dataclass object for the data file."""
-
         file_number = self.get_file_number(data_file)
         prefix = self.data_product_path
         scan_file = pathlib.Path(os.path.relpath(data_file, self.data_product_path))
@@ -176,9 +168,7 @@ class VoltageRecorderScan(Scan):
         """Return the file number field of the data, weights or stats filename."""
         file_name_stem = str(file_path.stem)
         parts = file_name_stem.split("_")
-        assert (
-            len(parts) == 3
-        ), f"Expected file_path to have stem with 3 underscore delimited components."
+        assert len(parts) == 3, "Expected file_path to have stem with 3 underscore delimited components."
         file_number = int(parts[2])
         # self.logger.debug(f"file_path={file_path} file_number={file_number}")
         return file_number
@@ -190,20 +180,15 @@ class VoltageRecorderScan(Scan):
 
     def generate_data_product_file(self: Scan):
         """Generate the ska-data-product.yaml file."""
-
         # ensure the scan is marked as completed
         if not self.is_scan_completed:
-            self.logger.warning(
-                "Cannot generate data product file as scan is not marked as completed"
-            )
+            self.logger.warning("Cannot generate data product file as scan is not marked as completed")
             return False
 
         # ensure there are no unprocessed data files
         (data_file, weights_file) = self.get_unprocessed_file()
         if not (data_file is None and weights_file is None):
-            self.logger.warning(
-                "Cannot generate data product file as unprocessed files exist"
-            )
+            self.logger.warning("Cannot generate data product file as unprocessed files exist")
             return False
 
         data_product_file = self.full_scan_path / pathlib.Path("ska-data-product.yaml")
@@ -211,9 +196,7 @@ class VoltageRecorderScan(Scan):
 
         metadata_builder = MetaDataBuilder()
         metadata_builder.dsp_mount_path = self.full_scan_path
-        metadata_builder.dada_file_manager = DadaFileManager(
-            metadata_builder.dsp_mount_path
-        )
+        metadata_builder.dada_file_manager = DadaFileManager(metadata_builder.dsp_mount_path)
         metadata_builder.build_metadata()
         metadata_builder.write_metadata(filename=str(data_product_file))
         return True
@@ -224,14 +207,11 @@ class VoltageRecorderScan(Scan):
 
     def get_unprocessed_file(
         self: Scan,
-    ) -> Tuple(pathLib.path, pathLib.path, pathLib.path):
+    ) -> Tuple(pathlib.path, pathlib.path, pathlib.path):
         """Return a data and weights file that have not yet been processed into a stat file."""
-
         self.update_files()
         for data_file in self._data_files:
-            expected_stat_file = pathlib.Path("stats") / pathlib.Path(
-                f"{data_file.file_name.stem}.h5"
-            )
+            expected_stat_file = pathlib.Path("stats") / pathlib.Path(f"{data_file.file_name.stem}.h5")
             expected_stat_path = self.full_scan_path / expected_stat_file
             if not expected_stat_path.is_file():
                 file_number = self.get_file_number(data_file.file_name)
@@ -243,11 +223,8 @@ class VoltageRecorderScan(Scan):
                 )
         return (None, None, None)
 
-    def process_file(
-        self: Scan, unprocessed_file: Tuple(pathLib.path, pathLib.path, pathLib.path)
-    ):
+    def process_file(self: Scan, unprocessed_file: Tuple(pathlib.path, pathlib.path, pathlib.path)):
         """Process the data and weights file to generate a stat file."""
-
         data_file = unprocessed_file[0]
         weights_file = unprocessed_file[1]
         stats_file = unprocessed_file[2]
@@ -264,7 +241,6 @@ class VoltageRecorderScan(Scan):
             str(weights_file),
         ]
         command = ["touch", str(stats_path)]
-        # command = ["ls", "-l"]
 
         self.logger.info(f"running command: {command}")
         completed = subprocess.run(
@@ -281,9 +257,4 @@ class VoltageRecorderScan(Scan):
         return ok
 
     def get_all_files(self: Scan) -> List[VoltageRecorderFile]:
-        return (
-            self._data_files
-            + self._weights_files
-            + self._stats_files
-            + self._config_files
-        )
+        return self._data_files + self._weights_files + self._stats_files + self._config_files

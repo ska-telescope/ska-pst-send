@@ -54,12 +54,8 @@ class MetaDataBuilder:
     def build_metadata(self: MetaDataBuilder):
         """Build the PstMetaData object."""
         try:
-            assert (
-                len(self._dada_file_manager.data_files) > 0
-            ), "Expected at least 1 data file"
-            assert (
-                len(self._dada_file_manager.weights_files) > 0
-            ), "Expected at least 1 weights file"
+            assert len(self._dada_file_manager.data_files) > 0, "Expected at least 1 data file"
+            assert len(self._dada_file_manager.weights_files) > 0, "Expected at least 1 weights file"
 
             date_object = datetime.strptime(
                 self.dada_file_manager.data_files[0].utc_start, "%Y-%m-%d-%H:%M:%S"
@@ -83,9 +79,7 @@ class MetaDataBuilder:
 
     def build_context(self: MetaDataBuilder) -> None:
         """Populate Fields used for PstContext."""
-        self._pst_metadata.context.observer = self.dada_file_manager.data_files[
-            0
-        ].observer
+        self._pst_metadata.context.observer = self.dada_file_manager.data_files[0].observer
         self._pst_metadata.context.intent = self.dada_file_manager.data_files[0].intent
         self._pst_metadata.context.notes = self.dada_file_manager.data_files[0].notes
 
@@ -130,9 +124,7 @@ class MetaDataBuilder:
         date_object = datetime.strptime(utc_datetime, datetime_format)
 
         # Calculate Julian Date (including fractional part)
-        days_since_2000_01_01 = (date_object - datetime(2000, 1, 1)).total_seconds() / (
-            24 * 3600
-        )
+        days_since_2000_01_01 = (date_object - datetime(2000, 1, 1)).total_seconds() / (24 * 3600)
         jd = days_since_2000_01_01 + 2451544.5
 
         # Calculate Modified Julian Date (MJD)
@@ -183,9 +175,7 @@ class MetaDataBuilder:
         # Add seconds to the datetime object
         datetime_with_seconds_added = datetime_t_min + timedelta(seconds=seconds_to_add)
         utc_format = "%Y-%m-%d-%H:%M:%S.%f"
-        t_max = self.convert_utc_to_mjd(
-            datetime_with_seconds_added.strftime(utc_format), utc_format
-        )
+        t_max = self.convert_utc_to_mjd(datetime_with_seconds_added.strftime(utc_format), utc_format)
 
         # Convert microseconds to seconds
         t_resolution = float(tsamp) / 1000000.0

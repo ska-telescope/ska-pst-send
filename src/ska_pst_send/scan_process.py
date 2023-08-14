@@ -8,31 +8,28 @@
 """Module class for asynchronously processing Scan data products into output data products."""
 from __future__ import annotations
 
-_all__ = [
-    "ScanProcess",
-]
-
 import logging
-import os
-import pathlib
-import queue
-import shutil
 import threading
 import time
 from typing import Any
 
+from .scan import VoltageRecorderScan
+
+_all__ = [
+    "ScanProcess",
+]
+
 
 class ScanProcess(threading.Thread):
-    """TODO"""
+    """Thread to asynchronously generate PST data product files for transfer to remote storage."""
 
     def __init__(
         self: ScanProcess,
-        scan: Scan,
-        quit_event: Threading.Event,
+        scan: VoltageRecorderScan,
+        quit_event: threading.Event,
         logger: logging.Logger | None = None,
     ):
         """Initialise the ScanProcess object."""
-
         threading.Thread.__init__(self)
 
         self.scan = scan
@@ -50,7 +47,6 @@ class ScanProcess(threading.Thread):
 
     def run(self: ScanProcess):
         """Perform processing of scan files."""
-
         self.logger.debug("starting processing thread")
         fully_processed = False
         while self.keep_processing and not fully_processed:

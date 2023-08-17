@@ -10,83 +10,83 @@ import logging
 import pathlib
 import sys
 import threading
-import time
 from signal import SIGINT, signal
 from typing import Any
 
-from .scan import VoltageRecorderScan
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
 from .scan_transfer import ScanTransfer
+from .voltage_recorder_scan import VoltageRecorderScan
 
 
-def process_scans(args: Any) -> None:
+def process_scans(
+    local_path: pathlib.Path, remote_path: pathlib.Path, ska_subsystem: str, verbose: bool, **kwargs: Any
+) -> None:
     """Primary processing method for the PST to SDP transfer."""
-    LOGGING_LEVEL = logging.INFO
-    if args["verbose"]:
-        LOGGING_LEVEL = logging.DEBUG
+    LOGGING_LEVEL = logging.DEBUG if verbose else logging.INFO
     LOG_FORMAT = "%(asctime)s : %(levelname)5s : %(msg)s : %(filename)s:%(lineno)s %(funcName)s()"
     logging.basicConfig(format=LOG_FORMAT, level=LOGGING_LEVEL)
 
     logger = logging.getLogger(__name__)
 
-    # handle SIGINT gracefully to prevent partially transferred files
-    quit_event = threading.Event()
+    cond = threading.Condition()
+    persist = True
 
+    # handle SIGINT gracefully to prevent partially transferred files
     def signal_handler(sig, frame):
         sys.stderr.write("CTRL + C pressed\n")
-        quit_event.set()
+        persist = False
+        with cond:
+            cond.notify_all()
 
     signal(SIGINT, signal_handler)
 
-    local_path = pathlib.Path(args["local_path"])
-    remote_path = pathlib.Path(args["remote_path"])
-    ska_subsystem = args["ska_subsystem"]
     logger.debug(f"local_path={local_path} remote_path={remote_path}")
-
     scan_manager = ScanManager(local_path, ska_subsystem, logger)
 
-    while not quit_event.isSet():
+    while persist:
 
-        # refresh the list of scans
-        scan_manager.refresh_scans()
-
-        # get the oldest scan in the list
+        # get the oldest available scan
         local_scan = scan_manager.get_oldest_scan()
 
-        # construct a remote scan object for comparison
-        remote_scan = VoltageRecorderScan(remote_path, local_scan.relative_scan_path, logger)
+        if local_scan is not None:
 
-        # perform post-processing on the scan to generate output files for transfer
-        scan_process = ScanProcess(local_scan, quit_event, logger)
-        scan_process.start()
+            # construct a remote scan object for comparison
+            remote_scan = VoltageRecorderScan(remote_path, local_scan.relative_scan_path, logger)
 
-        # perform the file transfer of output files to the remote storage
-        scan_transfer = ScanTransfer(local_scan, remote_scan, quit_event, logger)
-        scan_transfer.start()
+            # perform post-processing on the scan to generate output files for transfer
+            scan_process = ScanProcess(local_scan, cond, logger)
+            scan_process.start()
 
-        # wait for all processing of the scan to be completed, could exit early if the quit_event has been set
-        while scan_process.is_alive():
-            time.sleep(1)
-        scan_process.join()
+            # perform the file transfer of output files to the remote storage
+            scan_transfer = ScanTransfer(local_scan, remote_scan, cond, logger)
+            scan_transfer.start()
 
-        # wait for the scan transfer to be completed, could exit early if quit_event has been set
-        while scan_transfer.is_alive():
-            time.sleep(1)
-        scan_transfer.join()
+            logger.info(f"Processing {local_scan.relative_scan_path}")
+            scan_process.join()
+            scan_transfer.join()
 
-        all_processed = scan_process.get_unprocessed_file() is None
-        all_transferred = len(scan_transfer.get_untransferred_files()) == 0
-        logger.debug(
-            f"scan={local_scan.relative_scan_path} processed={all_processed} "
-            + f"transferred={all_transferred} quit_event={quit_event.isSet()}"
-        )
+            if scan_process.completed and scan_transfer.completed:
+                logger.debug(
+                    f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
+                    + f"transferred={scan_transfer.completed}"
+                )
 
-        if quit_event.isSet():
-            return
+                logger.debug(f"notifying data product dashbord for {remote_scan.relative_scan_path}")
 
-        # if all_processed and all_transferred:
-        # TODO notify the data product dashboard via the client API
+                # TODO notify the data product dashboard via the client API
+                dashboard_upload = False
+                if dashbaord_upload:
+                    local_scan.delete_scan()
+
+            else:
+                persist = False
+
+        with cond:
+            if cond.wait(timeout=10):
+                # condition variable was triggered
+                logger.info("SDPTransfer exiting on command")
+                return
 
 
 def main() -> None:
@@ -114,11 +114,13 @@ def main() -> None:
         default="http://127.0.0.1:8888",
         help="endpoint for the SDP Data Product Dashboard REST API",
     )
-    p.add_argument("--verbose", action="store_true")
+    p.add_argument("-v", "--verbose", action="store_true")
 
-    args = vars(p.parse_args())
+    args = p.parse_args()
     try:
-        process_scans(args)
+        process_scans(
+            pathlib.Path(args.local_path), pathlib.Path(args.remote_path), args.ska_subsystem, args.verbose
+        )
         sys.exit(0)
     except Exception:
         traceback.print_exc()

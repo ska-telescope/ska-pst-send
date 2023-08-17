@@ -131,3 +131,5 @@ def test_write_metadata():
     assert data.get("obscore")["em_res_power"] == pst_mdb.pst_metadata.obscore.em_res_power
     assert data.get("obscore")["em_resolution"] == pst_mdb.pst_metadata.obscore.em_resolution
     assert data.get("obscore")["o_ucd"] == pst_mdb.pst_metadata.obscore.o_ucd
+
+    os.unlink(absolute_path)

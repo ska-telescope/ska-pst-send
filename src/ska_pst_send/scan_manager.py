@@ -13,7 +13,7 @@ import os
 import pathlib
 from typing import List
 
-from .scan import VoltageRecorderScan
+from .voltage_recorder_scan import VoltageRecorderScan
 
 __all__ = [
     "ScanManager",
@@ -50,16 +50,15 @@ class ScanManager:
     def refresh_scans(self: ScanManager):
         """Update the list of scans."""
         # add new scans to the list
+        all_scan_rel_paths = [rp for s in self._scans for rp in s.relative_scan_path]
         for rel_scan_path in self.get_relative_scan_paths():
-            matches_existing = [x.match_relative_path(rel_scan_path) for x in self._scans]
-            if not any(matches_existing):
-                self.logger.debug(f"adding new scan at {str(rel_scan_path)}")
+            if rel_scan_path not in all_scan_rel_paths:
+                self.logger.debug(f"adding new scan {rel_scan_path}")
                 self._scans.append(VoltageRecorderScan(self.data_product_path, rel_scan_path, self.logger))
 
         # remove delete scans from the list
         for scan in self._scans:
-            matches_existing = [scan.match_relative_path(x) for x in self.get_relative_scan_paths()]
-            if not any(matches_existing):
+            if scan.relative_scan_path not in self.get_relative_scan_paths():
                 self.logger.debug(f"removing scan at {str(rel_scan_path)}")
                 self._scans.remove(scan)
 
@@ -76,6 +75,8 @@ class ScanManager:
 
     def get_oldest_scan(self: ScanManager) -> VoltageRecorderScan:
         """Return the oldest scan stored in the data_product_path."""
+        self.refresh_scans()
+
         # TODO work out oldest scan, for now return first scan in list
         if len(self._scans) > 0:
             return self._scans[0]

@@ -7,24 +7,21 @@
 
 """This module contains the pytest tests for the scan process thread."""
 
-import pathlib
 import threading
 import time
 from typing import List
-
-import pytest
 
 from ska_pst_send import ScanProcess, VoltageRecorderFile, VoltageRecorderScan
 
 
 def test_constructor(voltage_recording_scan: VoltageRecorderScan, scan_files: List[str]) -> None:
-
+    """Test the ScanProcess constructor initialises the object as required."""
     scan = voltage_recording_scan
 
     cond = threading.Condition
     scan_process = ScanProcess(scan, cond)
-    assert scan_process.completed == False
-    assert scan_process.is_alive() == False
+    assert scan_process.completed is False
+    assert scan_process.is_alive() is False
     assert len(scan.get_all_files()) == len(scan_files) + 1
 
 
@@ -35,7 +32,7 @@ def test_process(
     stats_files: List[str],
     scan_files: List[str],
 ) -> None:
-
+    """Test the ScanProcess can fully process a completed scan."""
     scan = voltage_recording_scan
     assert len(scan.get_all_files()) == len(scan_files) + 1
 
@@ -59,13 +56,11 @@ def test_process(
     time.sleep(0.5)
 
     # assert there are no more unprocessed files
-    unprocessed = scan.get_unprocessed_file()
-    expected = (None, None, None)
-    assert scan.get_unprocessed_file() == expected
+    assert scan.get_unprocessed_file() == (None, None, None)
 
     # assert that the scan is still incomplete since the data_product file and scan_completed
     # file do not yet exist
-    assert scan_process.completed == False
+    assert scan_process.completed is False
 
     # touch the remaining files
     scan._data_product_file.touch()
@@ -86,7 +81,7 @@ def test_process(
 
 
 def test_aborted_transfer(voltage_recording_scan: VoltageRecorderScan) -> None:
-
+    """Test that the ScanProcess thread can be aborted via the threading.Condition variable."""
     scan = voltage_recording_scan
     cond = threading.Condition()
 
@@ -105,5 +100,5 @@ def test_aborted_transfer(voltage_recording_scan: VoltageRecorderScan) -> None:
     time.sleep(scan_process.loop_wait)
     scan_process.join()
 
-    assert scan_process.is_alive() == False
-    assert scan_process.completed == False
+    assert scan_process.is_alive() is False
+    assert scan_process.completed is False

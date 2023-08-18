@@ -7,30 +7,27 @@
 
 """This module contains the pytest tests for the scan transfer thread."""
 
-import pathlib
 import threading
 import time
 from typing import List
-
-import pytest
 
 from ska_pst_send import ScanTransfer, VoltageRecorderScan
 
 
 def test_constructor(local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan)) -> None:
-
+    """Test the ScanTransfer construction initialises the object correctly."""
     (local_scan, remote_scan) = local_remote_scans
 
     cond = threading.Condition
     scan_transfer = ScanTransfer(local_scan, remote_scan, cond)
-    assert scan_transfer.completed == False
-    assert scan_transfer.is_alive() == False
+    assert scan_transfer.completed is False
+    assert scan_transfer.is_alive() is False
 
 
 def test_transfer(
     local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan), scan_files: List[str]
 ) -> None:
-
+    """Test the ScanTransfer can fully transfer a completed scan."""
     (local_scan, remote_scan) = local_remote_scans
 
     assert len(local_scan.get_all_files()) == len(scan_files) + 1
@@ -62,7 +59,7 @@ def test_transfer(
 def test_aborted_transfer(
     local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan), scan_files: List[str]
 ) -> None:
-
+    """Test that aborting the ScanTransfer thread via threading.Condition results in thread termination."""
     (local_scan, remote_scan) = local_remote_scans
 
     local_scan.update_files()
@@ -85,7 +82,7 @@ def test_aborted_transfer(
     while scan_transfer.is_alive():
         time.sleep(0.1)
 
-    assert scan_transfer.completed == False
+    assert scan_transfer.completed is False
     scan_transfer.join()
 
     # assert the number of remote files is <= local files

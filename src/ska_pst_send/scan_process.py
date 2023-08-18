@@ -28,12 +28,12 @@ class ScanProcess(threading.Thread):
         logger: logging.Logger | None = None,
     ):
         """Initialise the ScanProcess object."""
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
 
         self.scan = scan
         self.exit_cond = exit_cond
         self.logger = logger or logging.getLogger(__name__)
-        self.loop_wait = 5
+        self.loop_wait = 2
         self.completed = False
 
     def run(self: ScanProcess):

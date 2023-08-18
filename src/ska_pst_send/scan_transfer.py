@@ -32,7 +32,7 @@ class ScanTransfer(threading.Thread):
         logger: logging.Logger | None = None,
     ):
         """Initialise the ScanTransfer object."""
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
 
         self.local_scan = local_scan
         self.remote_scan = remote_scan
@@ -79,7 +79,7 @@ class ScanTransfer(threading.Thread):
 
                 local_file = local_path / untransferred_file.relative_path
                 remote_file = remote_path / untransferred_file.relative_path
-                self.logger.info(f"copying {untransferred_file.relative_path} to {remote_file}")
+                self.logger.info(f"copying {untransferred_file.relative_path} to remote")
                 remote_file.parent.mkdir(mode=0o644, parents=True, exist_ok=True)
                 shutil.copyfile(local_file, remote_file)
 

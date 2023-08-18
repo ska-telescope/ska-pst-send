@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import shutil
 
 __all__ = [
     "Scan",
@@ -41,9 +42,8 @@ class Scan:
         self._data_product_file = self.full_scan_path / "ska-data-product.yaml"
         self._scan_completed_file = self.full_scan_path / "scan_completed"
 
-    def delete_scan(self: Scan):
+    def delete_scan(self: Scan) -> None:
         """Delete all the local data files associated with a scan."""
-
         self.logger.debug(f"deleting all {self.relative_scan_path}")
         # first delete all files in the scan directory
         shutil.rmtree(self.full_scan_path)
@@ -52,28 +52,22 @@ class Scan:
         to_prune = self.full_scan_path.parent
         can_prune = True
         while can_prune:
-            try
-                print(f"{to_prune}.relative_to({self.data_product_path})")
+            try:
                 delta = to_prune.relative_to(self.data_product_path)
-                print(f"delta={delta}")
-                if delta == "":
+                if delta == pathlib.Path("."):
+                    self.logger.debug("pruned scan_path: stopping prune")
                     can_prune = False
                     continue
                 try:
                     # remove the directory, if it is empty
-                    print(f"{to_prune}.rmdir()")
                     to_prune.rmdir()
                     to_prune = to_prune.parent
                 except OSError as exc:
-                    print(f"delta={delta}")
-                    self.logger.debug("found non-empty parent directory: stopping prune")
+                    self.logger.debug(f"found non-empty parent directory, stopping prune: {exc}")
                     can_prune = False
-            except: ValueError as exc:
+            except ValueError as exc:
+                self.logger.debug(f"walked above data_product_path, stopping prune: {exc}")
                 can_prune = False
-
-        self.file_name.relative_to(self.data_product_path) 
-        # TODO decide if a Scan can delete itself
-
 
     @property
     def is_scan_recording(self: Scan) -> bool:

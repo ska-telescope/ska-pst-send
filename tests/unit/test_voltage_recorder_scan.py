@@ -10,25 +10,28 @@
 import pathlib
 from typing import List
 
-import pytest
-
 from ska_pst_send import VoltageRecorderFile, VoltageRecorderScan
+from tests.conftest import create_voltage_recorder_scan, remove_product
 
 
-def test_constructor(voltage_recording_scan: VoltageRecorderScan, scan_files) -> None:
-
-    scan = voltage_recording_scan
-    assert scan.scan_config_file_exists
-    assert scan.is_scan_recording == True
-    assert scan.data_product_file_exists == False
-    assert scan.is_scan_completed == False
-
-    # assert the scan is constructed with the correect number of files
-    assert len(scan.get_all_files()) == len(scan_files) + 1
+def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib) -> None:
+    """Test the VoltageRecorderScan constructor."""
+    try:
+        scan = create_voltage_recorder_scan(local_product_path, scan_path)
+        assert scan.scan_config_file_exists is False
+        assert scan.is_scan_recording
+        assert scan.data_product_file_exists is False
+        assert scan.is_scan_completed is False
+        assert len(scan.get_all_files()) == 0
+    except Exception as exc:
+        print(exc)
+        assert False
+    finally:
+        remove_product(local_product_path)
 
 
 def test_update_files(voltage_recording_scan: VoltageRecorderScan, scan_files: List[str]) -> None:
-
+    """Test the udpate_files method of VoltageRecorderScan."""
     scan = voltage_recording_scan
 
     # check the file count matches the expected values
@@ -43,7 +46,7 @@ def test_update_files(voltage_recording_scan: VoltageRecorderScan, scan_files: L
 
     # manually create the scan_completed file
     scan._scan_completed_file.touch()
-    assert scan.is_scan_recording == False
+    assert scan.is_scan_recording is False
     assert scan.is_scan_completed
 
     # the scan completed file is not a new file to be transferred
@@ -57,7 +60,7 @@ def test_get_unprocessed_file(
     weights_files: List[str],
     stats_files: List[str],
 ) -> None:
-
+    """Test the get_unprocessed_file method of VoltageRecorderScan."""
     scan = voltage_recording_scan
 
     # process each of the four data files, noting this will only work whilst the processor is "touch"

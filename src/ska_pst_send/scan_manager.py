@@ -50,7 +50,7 @@ class ScanManager:
     def refresh_scans(self: ScanManager):
         """Update the list of scans."""
         # add new scans to the list
-        all_scan_rel_paths = [rp for s in self._scans for rp in s.relative_scan_path]
+        all_scan_rel_paths = [s.relative_scan_path for s in self._scans]
         for rel_scan_path in self.get_relative_scan_paths():
             if rel_scan_path not in all_scan_rel_paths:
                 self.logger.debug(f"adding new scan {rel_scan_path}")
@@ -59,7 +59,7 @@ class ScanManager:
         # remove delete scans from the list
         for scan in self._scans:
             if scan.relative_scan_path not in self.get_relative_scan_paths():
-                self.logger.debug(f"removing scan at {str(rel_scan_path)}")
+                self.logger.debug(f"removing scan at {str(scan.relative_scan_path)}")
                 self._scans.remove(scan)
 
     def get_relative_scan_paths(self: ScanManager) -> List[pathlib.Path]:

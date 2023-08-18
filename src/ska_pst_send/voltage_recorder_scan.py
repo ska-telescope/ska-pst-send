@@ -44,7 +44,7 @@ class VoltageRecorderScan(Scan):
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
 
-    def update_files(self: Scan):
+    def update_files(self: Scan) -> None:
         """Check the file system for new data, weights and stats files."""
         self._data_files = []
         for data_file in list(sorted(self.full_scan_path.glob("data/*.dada"))):
@@ -64,7 +64,7 @@ class VoltageRecorderScan(Scan):
         if self.scan_config_file_exists:
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
 
-    def generate_data_product_file(self: Scan):
+    def generate_data_product_file(self: Scan) -> bool:
         """Generate the ska-data-product.yaml file."""
         # ensure the scan is marked as completed
         if not self.is_scan_completed:
@@ -105,7 +105,7 @@ class VoltageRecorderScan(Scan):
 
     def process_file(
         self: Scan, unprocessed_file: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile)
-    ):
+    ) -> bool:
         """Process the data and weights file to generate a stat file."""
         (data_file, weights_file, stats_file) = unprocessed_file
 
@@ -137,5 +137,6 @@ class VoltageRecorderScan(Scan):
         return ok
 
     def get_all_files(self: Scan) -> List[VoltageRecorderFile]:
+        """Return a list of all data, weights, stats and control files."""
         self.update_files()
         return self._data_files + self._weights_files + self._stats_files + self._config_files

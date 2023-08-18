@@ -6,12 +6,12 @@
 # See LICENSE for more info.
 
 """Module class for main PST to SDP Transfer application."""
+from __future__ import annotations
+
 import logging
 import pathlib
-import sys
 import threading
 from signal import SIGINT, signal
-from typing import Any
 
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
@@ -19,74 +19,84 @@ from .scan_transfer import ScanTransfer
 from .voltage_recorder_scan import VoltageRecorderScan
 
 
-def process_scans(
-    local_path: pathlib.Path, remote_path: pathlib.Path, ska_subsystem: str, verbose: bool, **kwargs: Any
-) -> None:
-    """Primary processing method for the PST to SDP transfer."""
-    LOGGING_LEVEL = logging.DEBUG if verbose else logging.INFO
-    LOG_FORMAT = "%(asctime)s : %(levelname)5s : %(msg)s : %(filename)s:%(lineno)s %(funcName)s()"
-    logging.basicConfig(format=LOG_FORMAT, level=LOGGING_LEVEL)
+class SdpTransfer:
+    """Class to manage the main execution loop of the PST to SDP transfer."""
 
-    logger = logging.getLogger(__name__)
+    def __init__(
+        self: SdpTransfer,
+        local_path: pathlib.Path,
+        remote_path: pathlib.Path,
+        ska_subsystem: str,
+        data_product_dashboard: str,
+        verbose: bool,
+    ) -> None:
+        """Initialise an SdpTransfer object."""
+        self.local_path = local_path
+        self.remote_path = remote_path
+        self.ska_subsystem = ska_subsystem
+        self.data_product_dashboard = data_product_dashboard
 
-    cond = threading.Condition()
-    persist = True
+        logging_level = logging.DEBUG if verbose else logging.INFO
+        log_format = "%(asctime)s : %(levelname)5s : %(msg)s : %(filename)s:%(lineno)s %(funcName)s()"
+        logging.basicConfig(format=log_format, level=logging_level)
+        self.logger = logging.getLogger(__name__)
+        self.cond = threading.Condition()
+        self.cond_timeout = 10
+        self.persist = True
 
-    # handle SIGINT gracefully to prevent partially transferred files
-    def signal_handler(sig, frame):
-        sys.stderr.write("CTRL + C pressed\n")
-        persist = False
-        with cond:
-            cond.notify_all()
+    def process(self: SdpTransfer) -> None:
+        """Primary processing method for the PST to SDP transfer."""
+        self.logger.debug(f"local_path={self.local_path} remote_path={self.remote_path}")
+        scan_manager = ScanManager(self.local_path, self.ska_subsystem, self.logger)
 
-    signal(SIGINT, signal_handler)
+        self.persist = True
+        while self.persist:
 
-    logger.debug(f"local_path={local_path} remote_path={remote_path}")
-    scan_manager = ScanManager(local_path, ska_subsystem, logger)
+            # get the oldest available scan
+            local_scan = scan_manager.get_oldest_scan()
 
-    while persist:
+            if local_scan is not None:
 
-        # get the oldest available scan
-        local_scan = scan_manager.get_oldest_scan()
-
-        if local_scan is not None:
-
-            # construct a remote scan object for comparison
-            remote_scan = VoltageRecorderScan(remote_path, local_scan.relative_scan_path, logger)
-
-            # perform post-processing on the scan to generate output files for transfer
-            scan_process = ScanProcess(local_scan, cond, logger)
-            scan_process.start()
-
-            # perform the file transfer of output files to the remote storage
-            scan_transfer = ScanTransfer(local_scan, remote_scan, cond, logger)
-            scan_transfer.start()
-
-            logger.info(f"Processing {local_scan.relative_scan_path}")
-            scan_process.join()
-            scan_transfer.join()
-
-            if scan_process.completed and scan_transfer.completed:
-                logger.debug(
-                    f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
-                    + f"transferred={scan_transfer.completed}"
+                # construct a remote scan object for comparison
+                remote_scan = VoltageRecorderScan(
+                    self.remote_path, local_scan.relative_scan_path, self.logger
                 )
 
-                logger.debug(f"notifying data product dashbord for {remote_scan.relative_scan_path}")
+                # perform post-processing on the scan to generate output files for transfer
+                scan_process = ScanProcess(local_scan, self.cond, self.logger)
+                scan_process.start()
 
-                # TODO notify the data product dashboard via the client API
-                dashboard_upload = False
-                if dashbaord_upload:
-                    local_scan.delete_scan()
+                # perform the file transfer of output files to the remote storage
+                scan_transfer = ScanTransfer(local_scan, remote_scan, self.cond, self.logger)
+                scan_transfer.start()
 
-            else:
-                persist = False
+                self.logger.info(f"Processing {local_scan.relative_scan_path}")
+                scan_process.join()
+                scan_transfer.join()
 
-        with cond:
-            if cond.wait(timeout=10):
-                # condition variable was triggered
-                logger.info("SDPTransfer exiting on command")
-                return
+                if scan_process.completed and scan_transfer.completed:
+                    self.logger.debug(
+                        f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
+                        + f"transferred={scan_transfer.completed}"
+                    )
+
+                    self.logger.debug(f"notifying data product dashbord for {remote_scan.relative_scan_path}")
+
+                    if self.data_product_dashboard == "disabled":
+                        local_scan.delete_scan()
+                        self.persist = False
+                    else:
+                        # TODO notify the data product dashboard via the client API
+                        self.logger.warning("SDP Data Product Dashboard notification not yet implemented")
+                else:
+                    self.persist = False
+
+            if self.persist:
+                with self.cond:
+                    if self.cond.wait(timeout=self.cond_timeout):
+                        # condition variable was triggered
+                        self.logger.info("SDPTransfer exiting on command")
+                        return
 
 
 def main() -> None:
@@ -111,16 +121,32 @@ def main() -> None:
     p.add_argument(
         "--data_product_dashboard",
         type=str,
-        default="http://127.0.0.1:8888",
-        help="endpoint for the SDP Data Product Dashboard REST API",
+        default="disabled",
+        help="endpoint for the SDP Data Product Dashboard REST API [e.g. http://127.0.0.1:8888/api]",
     )
     p.add_argument("-v", "--verbose", action="store_true")
 
     args = p.parse_args()
+
+    sdp_transfer = SdpTransfer(
+        pathlib.Path(args.local_path),
+        pathlib.Path(args.remote_path),
+        args.ska_subsystem,
+        args.data_product_dashboard,
+        args.verbose,
+    )
+
+    # handle SIGINT gracefully to prevent partially transferred files
+    def signal_handler(sig, frame):
+        sys.stderr.write("CTRL + C pressed\n")
+        sdp_transfer.persist = False
+        with sdp_transfer.cond:
+            sdp_transfer.cond.notify_all()
+
+    signal(SIGINT, signal_handler)
+
     try:
-        process_scans(
-            pathlib.Path(args.local_path), pathlib.Path(args.remote_path), args.ska_subsystem, args.verbose
-        )
+        sdp_transfer.process()
         sys.exit(0)
     except Exception:
         traceback.print_exc()

@@ -26,26 +26,27 @@ class ScanProcess(threading.Thread):
         scan: VoltageRecorderScan,
         exit_cond: threading.Condition,
         logger: logging.Logger | None = None,
-    ):
+        loop_wait: int = 2,
+    ) -> None:
         """Initialise the ScanProcess object."""
         threading.Thread.__init__(self, daemon=True)
 
         self.scan = scan
         self.exit_cond = exit_cond
         self.logger = logger or logging.getLogger(__name__)
-        self.loop_wait = 2
+        self.loop_wait = loop_wait
         self.completed = False
 
-    def run(self: ScanProcess):
+    def run(self: ScanProcess) -> None:
         """Perform processing of scan files."""
         self.logger.debug("starting scan processing thread")
 
         while not self.completed:
 
             # get an unprocessed file
-            unprocessed_file = self.scan.get_unprocessed_file()
+            unprocessed_file = self.scan.next_unprocessed_file
             if unprocessed_file == (None, None, None):
-                if self.scan.is_scan_completed:
+                if self.scan.is_complete:
                     if not self.scan.data_product_file_exists:
                         self.logger.debug("generating data product YAML file")
                         self.generate_data_product_file()

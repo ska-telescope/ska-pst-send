@@ -19,9 +19,9 @@ def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib) -> No
     try:
         scan = create_voltage_recorder_scan(local_product_path, scan_path)
         assert scan.scan_config_file_exists is False
-        assert scan.is_scan_recording
+        assert scan.is_recording
         assert scan.data_product_file_exists is False
-        assert scan.is_scan_completed is False
+        assert scan.is_complete is False
         assert len(scan.get_all_files()) == 0
     except Exception as exc:
         print(exc)
@@ -46,38 +46,40 @@ def test_update_files(voltage_recording_scan: VoltageRecorderScan, scan_files: L
 
     # manually create the scan_completed file
     scan._scan_completed_file.touch()
-    assert scan.is_scan_recording is False
-    assert scan.is_scan_completed
+    assert scan.is_recording is False
+    assert scan.is_complete
 
     # the scan completed file is not a new file to be transferred
     scan.update_files()
     assert len(scan.get_all_files()) == len(scan_files) + 2
 
 
-def test_get_unprocessed_file(
+def test_next_unprocessed_file(
     voltage_recording_scan: VoltageRecorderScan,
     data_files: List[str],
     weights_files: List[str],
     stats_files: List[str],
 ) -> None:
-    """Test the get_unprocessed_file method of VoltageRecorderScan."""
+    """Test the next_unprocessed_file property of VoltageRecorderScan."""
     scan = voltage_recording_scan
+
+    sorted_data_files = sorted(data_files)
+    sorted_weights_files = sorted(weights_files)
+    sorted_stats_files = sorted(stats_files)
 
     # process each of the four data files, noting this will only work whilst the processor is "touch"
     for i in range(len(data_files)):
-        unprocessed_file = scan.get_unprocessed_file()
+        unprocessed_file = scan.next_unprocessed_file
         expected = (
-            VoltageRecorderFile(scan.full_scan_path / data_files[i], scan.data_product_path),
-            VoltageRecorderFile(scan.full_scan_path / weights_files[i], scan.data_product_path),
-            VoltageRecorderFile(scan.full_scan_path / stats_files[i], scan.data_product_path),
+            VoltageRecorderFile(scan.full_scan_path / sorted_data_files[i], scan.data_product_path),
+            VoltageRecorderFile(scan.full_scan_path / sorted_weights_files[i], scan.data_product_path),
+            VoltageRecorderFile(scan.full_scan_path / sorted_stats_files[i], scan.data_product_path),
         )
         assert unprocessed_file[0] == expected[0]
         assert unprocessed_file[1] == expected[1]
 
-        result = scan.process_file(unprocessed_file)
-        assert result
+        assert scan.process_file(unprocessed_file)
         assert unprocessed_file[2].exists
         assert unprocessed_file[2] == expected[2]
 
-    unprocessed_file = scan.get_unprocessed_file()
-    assert unprocessed_file == (None, None, None)
+    assert scan.next_unprocessed_file == (None, None, None)

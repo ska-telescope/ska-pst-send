@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import pathlib
 import threading
-from signal import SIGINT, signal
+from signal import SIGINT, SIGTERM, signal
 
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
@@ -28,7 +28,7 @@ class SdpTransfer:
         remote_path: pathlib.Path,
         ska_subsystem: str,
         data_product_dashboard: str,
-        verbose: bool,
+        verbose: bool = False,
     ) -> None:
         """Initialise an SdpTransfer object."""
         self.local_path = local_path
@@ -40,20 +40,26 @@ class SdpTransfer:
         log_format = "%(asctime)s : %(levelname)5s : %(msg)s : %(filename)s:%(lineno)s %(funcName)s()"
         logging.basicConfig(format=log_format, level=logging_level)
         self.logger = logging.getLogger(__name__)
-        self.cond = threading.Condition()
-        self.cond_timeout = 10
-        self.persist = True
+        self._cond = threading.Condition()
+        self._cond_timeout = 10
+        self._persist = True
+
+    def interrrupt_processing(self: SdpTransfer) -> None:
+        """Interrupt the processing and transferring of the scan."""
+        self._persist = False
+        with self._cond:
+            self._cond.notify_all()
 
     def process(self: SdpTransfer) -> None:
         """Primary processing method for the PST to SDP transfer."""
         self.logger.debug(f"local_path={self.local_path} remote_path={self.remote_path}")
         scan_manager = ScanManager(self.local_path, self.ska_subsystem, self.logger)
 
-        self.persist = True
-        while self.persist:
+        self._persist = True
+        while self._persist:
 
             # get the oldest available scan
-            local_scan = scan_manager.get_oldest_scan()
+            local_scan = scan_manager.oldest_scan
 
             if local_scan is not None:
 
@@ -63,11 +69,11 @@ class SdpTransfer:
                 )
 
                 # perform post-processing on the scan to generate output files for transfer
-                scan_process = ScanProcess(local_scan, self.cond, self.logger)
+                scan_process = ScanProcess(local_scan, self._cond, self.logger)
                 scan_process.start()
 
                 # perform the file transfer of output files to the remote storage
-                scan_transfer = ScanTransfer(local_scan, remote_scan, self.cond, self.logger)
+                scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, self.logger)
                 scan_transfer.start()
 
                 self.logger.info(f"Processing {local_scan.relative_scan_path}")
@@ -84,17 +90,16 @@ class SdpTransfer:
 
                     if self.data_product_dashboard == "disabled":
                         local_scan.delete_scan()
-                        self.persist = False
+                        self._persist = False
                     else:
                         # TODO notify the data product dashboard via the client API
                         self.logger.warning("SDP Data Product Dashboard notification not yet implemented")
                 else:
-                    self.persist = False
+                    self._persist = False
 
-            if self.persist:
-                with self.cond:
-                    if self.cond.wait(timeout=self.cond_timeout):
-                        # condition variable was triggered
+            if self._persist:
+                with self._cond:
+                    if self._cond.wait(timeout=self._cond_timeout):
                         self.logger.info("SDPTransfer exiting on command")
                         return
 
@@ -109,12 +114,12 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument(
         "local_path",
-        type=str,
+        type=pathlib.Path,
         help="local/source filesystem path in which PST data products are found",
     )
     p.add_argument(
         "remote_path",
-        type=str,
+        type=pathlib.Path,
         help="remote/dest filesystem path to which PST data products should be written",
     )
     p.add_argument("ska_subsystem", type=str, default="pst-low", help="ska-subsystem")
@@ -126,24 +131,17 @@ def main() -> None:
     )
     p.add_argument("-v", "--verbose", action="store_true")
 
-    args = p.parse_args()
+    args = vars(p.parse_args())
 
-    sdp_transfer = SdpTransfer(
-        pathlib.Path(args.local_path),
-        pathlib.Path(args.remote_path),
-        args.ska_subsystem,
-        args.data_product_dashboard,
-        args.verbose,
-    )
+    sdp_transfer = SdpTransfer(**args)
 
     # handle SIGINT gracefully to prevent partially transferred files
     def signal_handler(sig, frame):
         sys.stderr.write("CTRL + C pressed\n")
-        sdp_transfer.persist = False
-        with sdp_transfer.cond:
-            sdp_transfer.cond.notify_all()
+        sdp_transfer.interrrupt_processing()
 
     signal(SIGINT, signal_handler)
+    signal(SIGTERM, signal_handler)
 
     try:
         sdp_transfer.process()

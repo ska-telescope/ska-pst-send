@@ -18,7 +18,7 @@ __all__ = [
 
 
 class Scan:
-    """Abstract Base class for representing PST Scan Data Products, stored on the local file system."""
+    """Base class for representing PST Scan Data Products, stored on the local file system."""
 
     def __init__(
         self: Scan,
@@ -70,7 +70,7 @@ class Scan:
                 can_prune = False
 
     @property
-    def is_scan_recording(self: Scan) -> bool:
+    def is_recording(self: Scan) -> bool:
         """Return true is the scan been not yet been marked as completed."""
         return not self._scan_completed_file.exists()
 
@@ -85,6 +85,6 @@ class Scan:
         return self._scan_config_file.exists()
 
     @property
-    def is_scan_completed(self: Scan) -> bool:
+    def is_complete(self: Scan) -> bool:
         """Return true if the scan_completed file exists."""
-        return self._scan_completed_file.is_file()
+        return self._scan_completed_file.exists()

@@ -46,17 +46,20 @@ class VoltageRecorderScan(Scan):
 
     def update_files(self: Scan) -> None:
         """Check the file system for new data, weights and stats files."""
-        self._data_files = []
-        for data_file in list(sorted(self.full_scan_path.glob("data/*.dada"))):
-            self._data_files.append(VoltageRecorderFile(data_file, self.data_product_path))
+        self._data_files = [
+            VoltageRecorderFile(data_file, self.data_product_path)
+            for data_file in sorted(self.full_scan_path.glob("data/*.dada"))
+        ]
 
-        self._weights_files = []
-        for weights_file in list(sorted(self.full_scan_path.glob("weights/*.dada"))):
-            self._weights_files.append(VoltageRecorderFile(weights_file, self.data_product_path))
+        self._weights_files = [
+            VoltageRecorderFile(weights_file, self.data_product_path)
+            for weights_file in sorted(self.full_scan_path.glob("weights/*.dada"))
+        ]
 
-        self._stats_files = []
-        for stats_file in list(sorted(self.full_scan_path.glob("stats/*.h5"))):
-            self._stats_files.append(VoltageRecorderFile(stats_file, self.data_product_path))
+        self._stats_files = [
+            VoltageRecorderFile(stats_file, self.data_product_path)
+            for stats_file in sorted(self.full_scan_path.glob("stats/*.h5"))
+        ]
 
         self._config_files = []
         if self.data_product_file_exists:
@@ -67,12 +70,12 @@ class VoltageRecorderScan(Scan):
     def generate_data_product_file(self: Scan) -> bool:
         """Generate the ska-data-product.yaml file."""
         # ensure the scan is marked as completed
-        if not self.is_scan_completed:
+        if not self.is_complete:
             self.logger.warning("Cannot generate data product file as scan is not marked as completed")
             return False
 
         # ensure there are no unprocessed data files
-        if self.get_unprocessed_file() != (None, None, None):
+        if self.next_unprocessed_file != (None, None, None):
             self.logger.warning("Cannot generate data product file as unprocessed files exist")
             return False
 
@@ -86,7 +89,8 @@ class VoltageRecorderScan(Scan):
         metadata_builder.write_metadata(filename=str(data_product_file))
         return True
 
-    def get_unprocessed_file(
+    @property
+    def next_unprocessed_file(
         self: Scan,
     ) -> Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile):
         """Return a data and weights file that have not yet been processed into a stat file."""

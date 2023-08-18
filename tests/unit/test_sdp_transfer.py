@@ -26,9 +26,7 @@ class NotifyThread(threading.Thread):
     def run(self: NotifyThread) -> None:
         """Run the notify thread."""
         time.sleep(self.timeout)
-        self.sdp_transfer.persist = False
-        with self.sdp_transfer.cond:
-            self.sdp_transfer.cond.notify_all()
+        self.sdp_transfer.interrrupt_processing()
 
 
 def test_sdp_transfer_process(

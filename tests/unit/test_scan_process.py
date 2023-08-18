@@ -37,8 +37,7 @@ def test_process(
     assert len(scan.get_all_files()) == len(scan_files) + 1
 
     cond = threading.Condition()
-    scan_process = ScanProcess(scan, cond)
-    scan_process.loop_wait = 0.1
+    scan_process = ScanProcess(scan, cond, loop_wait=0.1)
 
     # Assert that there are unprocessed files
     expected = (
@@ -46,7 +45,7 @@ def test_process(
         VoltageRecorderFile(scan.full_scan_path / weights_files[0], scan.data_product_path),
         VoltageRecorderFile(scan.full_scan_path / stats_files[0], scan.data_product_path),
     )
-    assert scan.get_unprocessed_file() == expected
+    assert scan.next_unprocessed_file == expected
 
     # start the ScanProcess thread
     scan_process.start()
@@ -56,7 +55,7 @@ def test_process(
     time.sleep(0.5)
 
     # assert there are no more unprocessed files
-    assert scan.get_unprocessed_file() == (None, None, None)
+    assert scan.next_unprocessed_file == (None, None, None)
 
     # assert that the scan is still incomplete since the data_product file and scan_completed
     # file do not yet exist
@@ -85,9 +84,7 @@ def test_aborted_transfer(voltage_recording_scan: VoltageRecorderScan) -> None:
     scan = voltage_recording_scan
     cond = threading.Condition()
 
-    scan_process = ScanProcess(scan, cond)
-    scan_process.loop_wait = 0.1
-
+    scan_process = ScanProcess(scan, cond, loop_wait=0.1)
     scan_process.start()
     assert scan_process.is_alive()
 

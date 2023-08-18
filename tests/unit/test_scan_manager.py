@@ -26,13 +26,13 @@ def test_scan_paths(three_local_scans: List[VoltageRecorderScan], ss_id: str) ->
     data_product_path = scan_list[0].data_product_path
     scan_manager = ScanManager(data_product_path, ss_id)
 
-    scan_paths = scan_manager.get_scan_paths()
+    scan_paths = scan_manager.scan_paths
     for scan in scan_list:
         assert scan.full_scan_path in scan_paths
 
-    relative_scan_paths = scan_manager.get_relative_scan_paths()
+    relative_scan_paths = scan_manager.relative_scan_paths
     for scan in scan_list:
-        assert str(scan.relative_scan_path) in relative_scan_paths
+        assert scan.relative_scan_path in relative_scan_paths
 
 
 def test_get_oldest_scan(three_local_scans: List[VoltageRecorderScan], ss_id: str):
@@ -41,7 +41,7 @@ def test_get_oldest_scan(three_local_scans: List[VoltageRecorderScan], ss_id: st
     data_product_path = scan_list[0].data_product_path
     scan_manager = ScanManager(data_product_path, ss_id)
 
-    oldest = scan_manager.get_oldest_scan()
+    oldest = scan_manager.oldest_scan
 
     # for now, rely on the scan_manager to order the _scans attribute correctly
     assert oldest.relative_scan_path == scan_manager._scans[0].relative_scan_path
@@ -56,7 +56,7 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], ss_id: str):
     data_product_path = scan_list[0].data_product_path
     scan_manager = ScanManager(data_product_path, ss_id)
 
-    scan_manager.refresh_scans()
+    scan_manager._refresh_scans()
     assert len(scan_manager._scans) == len(scan_list)
 
     # delete the scans in the list, and force the scan_manager to detect this
@@ -66,7 +66,7 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], ss_id: str):
         scan_manager._scans[0].delete_scan()
 
         # force the scan_manager to detect the deleted scan
-        oldest = scan_manager.get_oldest_scan()
+        oldest = scan_manager.oldest_scan
         assert len(scan_manager._scans) == len(scan_list) - (i + 1)
 
         if (i + 1) < len(scan_list):
@@ -77,6 +77,6 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], ss_id: str):
         else:
             assert oldest is None
 
-    scan_manager.refresh_scans()
+    scan_manager._refresh_scans()
     assert len(scan_manager._scans) == 0
-    assert scan_manager.get_oldest_scan() is None
+    assert scan_manager.oldest_scan is None

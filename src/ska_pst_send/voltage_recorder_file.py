@@ -22,7 +22,7 @@ class VoltageRecorderFile:
         """Initialise the VoltageRecorderFile object."""
         self.file_name = file_name
         self.data_product_path = data_product_path
-        self.file_number = self.get_file_number(file_name)
+        self._file_number = None
 
     def __str__(self: VoltageRecorderFile):
         """Return a extended string representation of a VoltageRecorderFile object."""
@@ -66,13 +66,20 @@ class VoltageRecorderFile:
         """The relative path to the data_product_path."""
         return self.file_name.relative_to(self.data_product_path)
 
-    @classmethod
-    def get_file_number(self: VoltageRecorderFile, file_name: pathlib.Path) -> int:
-        """Return the file number of the voltage recorder file or 0 if no file number is relevant."""
-        parts = str(file_name.stem).split("_")
-        if len(parts) == 3:
-            try:
-                return int(parts[2])
-            except ValueError:
-                return 0
-        return 0
+    @property
+    def file_number(self: VoltageRecorderFile) -> int:
+        """
+        The file number of the voltage recorder file, or 0 in not applicable.
+
+        The file number is used for sequencing the order of files to process.
+        """
+        if self._file_number is None:
+            parts = str(self.file_name.stem).split("_")
+            if len(parts) == 3:
+                try:
+                    self._file_number = int(parts[2])
+                except ValueError:
+                    self._file_number = 0
+            else:
+                self._file_number = 0
+        return self._file_number

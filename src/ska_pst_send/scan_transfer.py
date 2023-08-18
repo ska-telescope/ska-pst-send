@@ -30,7 +30,8 @@ class ScanTransfer(threading.Thread):
         remote_scan: VoltageRecorderScan,
         exit_cond: threading.Condition,
         logger: logging.Logger | None = None,
-    ):
+        loop_wait: int = 2,
+    ) -> None:
         """Initialise the ScanTransfer object."""
         threading.Thread.__init__(self, daemon=True)
 
@@ -39,10 +40,11 @@ class ScanTransfer(threading.Thread):
         self.exit_cond = exit_cond
         self.logger = logger or logging.getLogger(__name__)
         self.completed = False
-        self.loop_wait = 2
+        self.loop_wait = loop_wait
         self.logger.debug(f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}")
 
-    def get_untransferred_files(self: ScanTransfer) -> List[VoltageRecorderFile]:
+    @property
+    def untransferred_files(self: ScanTransfer) -> List[VoltageRecorderFile]:
         """Return the list of untransferred files for the scan."""
         # update the local and remote scan file lists
         self.local_scan.update_files()
@@ -57,7 +59,7 @@ class ScanTransfer(threading.Thread):
         untransferred_files = [local for local in local_files if local not in remote_files]
         self.logger.debug(f"untransferred_files count={len(untransferred_files)}")
 
-        return untransferred_files
+        return sorted(untransferred_files)
 
     def run(self: ScanTransfer):
         """Run the transfer for the Scan from local to remote."""
@@ -66,9 +68,7 @@ class ScanTransfer(threading.Thread):
         remote_path = self.remote_scan.data_product_path
 
         while not self.completed:
-
-            untransferred_files = sorted(self.get_untransferred_files())
-            for untransferred_file in untransferred_files:
+            for untransferred_file in self.untransferred_files:
                 self.logger.debug(f"untransferred_file={untransferred_file}")
 
                 # check for the exit condition, with a small timeout
@@ -85,8 +85,8 @@ class ScanTransfer(threading.Thread):
 
             # check if the scan is completed and the ScanProcess has generated the data-product-file
             if (
-                len(untransferred_files) == 0
-                and self.local_scan.is_scan_completed
+                len(self.untransferred_files) == 0
+                and self.local_scan.is_complete
                 and self.local_scan.data_product_file_exists
             ):
                 self.completed = True

@@ -34,8 +34,7 @@ def test_transfer(
     assert len(remote_scan.get_all_files()) == 0
 
     cond = threading.Condition()
-    scan_transfer = ScanTransfer(local_scan, remote_scan, cond)
-    scan_transfer.loop_wait = 0.1
+    scan_transfer = ScanTransfer(local_scan, remote_scan, cond, loop_wait=0.1)
     scan_transfer.start()
 
     assert scan_transfer.is_alive()
@@ -66,8 +65,7 @@ def test_aborted_transfer(
     remote_scan.update_files()
 
     cond = threading.Condition()
-    scan_transfer = ScanTransfer(local_scan, remote_scan, cond)
-    scan_transfer.loop_wait = 0.1
+    scan_transfer = ScanTransfer(local_scan, remote_scan, cond, loop_wait=0.1)
     scan_transfer.start()
 
     assert scan_transfer.is_alive()

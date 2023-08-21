@@ -11,7 +11,7 @@ import pathlib
 from typing import List
 
 from ska_pst_send import VoltageRecorderFile, VoltageRecorderScan
-from tests.conftest import create_voltage_recorder_scan, remove_product
+from tests.conftest import create_voltage_recorder_scan, remove_send_tempdir
 
 
 def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib) -> None:
@@ -23,25 +23,22 @@ def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib) -> No
         assert scan.data_product_file_exists is False
         assert scan.is_complete is False
         assert len(scan.get_all_files()) == 0
-    except Exception as exc:
-        print(exc)
-        assert False
     finally:
-        remove_product(local_product_path)
+        remove_send_tempdir()
 
 
 def test_update_files(voltage_recording_scan: VoltageRecorderScan, scan_files: List[str]) -> None:
     """Test the udpate_files method of VoltageRecorderScan."""
     scan = voltage_recording_scan
 
-    # check the file count matches the expected values
+    # check the file count matches the expected: scan_files + scan_config
     assert len(scan.get_all_files()) == len(scan_files) + 1
 
     # manually create the ska-data-product.yaml file
     scan._data_product_file.touch()
     assert scan.data_product_file_exists
 
-    # ensure this file is detected in the file list
+    # check the file count matches the expected: scan_files + scan_config + data_product
     assert len(scan.get_all_files()) == len(scan_files) + 2
 
     # manually create the scan_completed file
@@ -49,7 +46,8 @@ def test_update_files(voltage_recording_scan: VoltageRecorderScan, scan_files: L
     assert scan.is_recording is False
     assert scan.is_complete
 
-    # the scan completed file is not a new file to be transferred
+    # ensure the scan_complete file is not counted:
+    # i.e. check the file count matches the expected: scan_files + scan_config + data_product
     scan.update_files()
     assert len(scan.get_all_files()) == len(scan_files) + 2
 

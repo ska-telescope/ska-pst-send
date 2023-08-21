@@ -8,13 +8,19 @@
 """This module defines elements of the pytest test harness shared by all tests."""
 
 import pathlib
+import random
 import shutil
+import string
+import tempfile
 import uuid
+from datetime import datetime
 from typing import Callable, Generator, List
 
 import pytest
 
 from ska_pst_send import Scan, VoltageRecorderScan
+
+TEST_DATA_DIR = "sendtest"
 
 
 def create_scan(product: pathlib.Path, scan: pathlib.Path) -> Scan:
@@ -31,21 +37,27 @@ def create_voltage_recorder_scan(product: pathlib.Path, scan: pathlib.Path) -> V
     return VoltageRecorderScan(product, scan)
 
 
-def remove_product(product_path: pathlib.Path) -> None:
-    """Recursively delete the all file system elements at the path."""
-    shutil.rmtree(product_path)
+def remove_send_tempdir() -> None:
+    """Recursively remove all files and directories from the test data dir."""
+    shutil.rmtree(pathlib.Path(tempfile.gettempdir()) / TEST_DATA_DIR)
 
 
 @pytest.fixture
-def local_product_path() -> pathlib.Path:
+def send_tempdir() -> pathlib.Path:
+    """Return a path to the test data dir, under which files can be created."""
+    return pathlib.Path(tempfile.gettempdir()) / TEST_DATA_DIR
+
+
+@pytest.fixture
+def local_product_path(send_tempdir: pathlib.Path) -> pathlib.Path:
     """Return a local data product path."""
-    return pathlib.Path("/tmp/local/product")
+    return send_tempdir / "local" / "product"
 
 
 @pytest.fixture
-def remote_product_path() -> pathlib.Path:
+def remote_product_path(send_tempdir: pathlib.Path) -> pathlib.Path:
     """Return a remote data product path."""
-    return pathlib.Path("/tmp/remote/product")
+    return send_tempdir / "remote" / "product"
 
 
 @pytest.fixture
@@ -60,28 +72,33 @@ def scan_id_factory() -> Callable[..., str]:
 
 @pytest.fixture
 def eb_id() -> str:
-    """Return a valid execution block id."""
-    return "eb-m001-20191031-12345"
+    """Return a valid execution block id for test config."""
+    rand_char = random.choice(string.ascii_lowercase)
+    rand1 = random.randint(0, 999)
+    rand2 = random.randint(0, 99999)
+    today_str = datetime.today().strftime("%Y%m%d")
+
+    return f"eb-{rand_char}{rand1:03d}-{today_str}-{rand2:05d}"
 
 
 @pytest.fixture
-def ss_id() -> str:
-    """Return a valid sub-system id."""
-    return "pst-low"
+def subsystem_id() -> str:
+    """Return a valid sub-system id. for test-config."""
+    return random.choice(["pst-low", "pst-mid"])
 
 
 @pytest.fixture
-def scan_path(eb_id: str, ss_id: str, scan_id_factory: str) -> pathlib.Path:
+def scan_path(eb_id: str, subsystem_id: str, scan_id_factory: str) -> pathlib.Path:
     """Return a valid relative scan path."""
-    return pathlib.Path(f"{eb_id}/{ss_id}/{scan_id_factory()}")
+    return pathlib.Path(f"{eb_id}/{subsystem_id}/{scan_id_factory()}")
 
 
 @pytest.fixture
-def scan_path_factory(eb_id: str, ss_id: str, scan_id_factory: str) -> Callable[..., pathlib.Path]:
+def scan_path_factory(eb_id: str, subsystem_id: str, scan_id_factory: str) -> Callable[..., pathlib.Path]:
     """Return a dynamically created relative scan path."""
 
     def _factory() -> pathlib.Path:
-        return pathlib.Path(f"{eb_id}/{ss_id}/{scan_id_factory()}")
+        return pathlib.Path(f"{eb_id}/{subsystem_id}/{scan_id_factory()}")
 
     return _factory
 
@@ -131,7 +148,7 @@ def scan(local_product_path: pathlib.Path, scan_path: pathlib.Path) -> Scan:
     scan = create_scan(local_product_path, scan_path)
     scan._scan_config_file.touch()
     yield scan
-    remove_product(local_product_path)
+    remove_send_tempdir()
 
 
 @pytest.fixture
@@ -163,7 +180,7 @@ def voltage_recording_scan(
         full_scan_file_path.touch(mode=0o777)
 
     yield scan
-    remove_product(local_product_path)
+    remove_send_tempdir()
 
 
 @pytest.fixture
@@ -207,8 +224,7 @@ def local_remote_scans(
     remote_scan = create_voltage_recorder_scan(remote_product_path, scan_path)
 
     yield (local_scan, remote_scan)
-    remove_product(local_product_path)
-    remove_product(remote_product_path)
+    remove_send_tempdir()
 
 
 @pytest.fixture
@@ -222,8 +238,6 @@ def three_local_scans(voltage_recording_scan_factory: VoltageRecorderScan) -> Li
     scans.append(voltage_recording_scan_factory())
     scans.append(voltage_recording_scan_factory())
     scans.append(voltage_recording_scan_factory())
-    data_product_path = scans[0].data_product_path
 
     yield scans
-
-    remove_product(data_product_path)
+    remove_send_tempdir()

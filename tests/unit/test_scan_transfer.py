@@ -30,7 +30,9 @@ def test_transfer(
     """Test the ScanTransfer can fully transfer a completed scan."""
     (local_scan, remote_scan) = local_remote_scans
 
-    assert len(local_scan.get_all_files()) == len(scan_files) + 1
+    # expected length is the number of scan_files + 1 (for the scan_configuration.json file)
+    expected_length = len(scan_files) + 1
+    assert len(local_scan.get_all_files()) == expected_length
     assert len(remote_scan.get_all_files()) == 0
 
     cond = threading.Condition()

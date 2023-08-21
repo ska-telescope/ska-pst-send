@@ -12,19 +12,19 @@ from typing import List
 from ska_pst_send import ScanManager, VoltageRecorderScan
 
 
-def test_constructor(three_local_scans: List[VoltageRecorderScan], ss_id: str) -> None:
+def test_constructor(three_local_scans: List[VoltageRecorderScan], subsystem_id: str) -> None:
     """Test that the ScanManager constructor correctly initialises an object."""
     scan_list = three_local_scans
     data_product_path = scan_list[0].data_product_path
-    scan_manager = ScanManager(data_product_path, ss_id)
+    scan_manager = ScanManager(data_product_path, subsystem_id)
     assert len(scan_manager._scans) == len(scan_list)
 
 
-def test_scan_paths(three_local_scans: List[VoltageRecorderScan], ss_id: str) -> None:
+def test_scan_paths(three_local_scans: List[VoltageRecorderScan], subsystem_id: str) -> None:
     """Test the ScanManager initialises with a scan list that matches the existing scans."""
     scan_list = three_local_scans
     data_product_path = scan_list[0].data_product_path
-    scan_manager = ScanManager(data_product_path, ss_id)
+    scan_manager = ScanManager(data_product_path, subsystem_id)
 
     scan_paths = scan_manager.scan_paths
     for scan in scan_list:
@@ -35,11 +35,11 @@ def test_scan_paths(three_local_scans: List[VoltageRecorderScan], ss_id: str) ->
         assert scan.relative_scan_path in relative_scan_paths
 
 
-def test_get_oldest_scan(three_local_scans: List[VoltageRecorderScan], ss_id: str):
-    """Test that ScanManager get_oldest_scan method."""
+def test_oldest_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id: str):
+    """Test that ScanManager oldest_scan method."""
     scan_list = three_local_scans
     data_product_path = scan_list[0].data_product_path
-    scan_manager = ScanManager(data_product_path, ss_id)
+    scan_manager = ScanManager(data_product_path, subsystem_id)
 
     oldest = scan_manager.oldest_scan
 
@@ -50,11 +50,11 @@ def test_get_oldest_scan(three_local_scans: List[VoltageRecorderScan], ss_id: st
     assert oldest.get_all_files == scan_manager._scans[0].get_all_files
 
 
-def test_delete_scan(three_local_scans: List[VoltageRecorderScan], ss_id: str):
+def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id: str):
     """Test the ScanManager detects scans that have been processed and deleted."""
     scan_list = three_local_scans
     data_product_path = scan_list[0].data_product_path
-    scan_manager = ScanManager(data_product_path, ss_id)
+    scan_manager = ScanManager(data_product_path, subsystem_id)
 
     scan_manager._refresh_scans()
     assert len(scan_manager._scans) == len(scan_list)

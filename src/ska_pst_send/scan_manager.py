@@ -30,10 +30,11 @@ class ScanManager:
         subsystem: str,
         logger: logging.Logger | None = None,
     ) -> None:
-        """Init object.
+        """Initialise a ScanManager object.
 
-        param data_product_path: The absolute path containing scans
-        param subsystem: The PST instance
+        :param pathlib data_product_path: absolute file system path to the data product directory
+        :param str subsystem: The PST instance, one of pst-low or pst-mid
+        :param logging.Logger logger: The logger instance to use.
         """
         assert data_product_path.exists() and data_product_path.is_dir()
         assert subsystem in PST_SUBSYSTEMS
@@ -63,17 +64,32 @@ class ScanManager:
 
     @property
     def relative_scan_paths(self: ScanManager) -> List[pathlib.Path]:
-        """Return a of the relative scan paths stored in the data_product_path."""
+        """
+        Return a current list of the relative scan paths stored in the data_product_path.
+
+        :return: the list of relative scan paths.
+        :rtype: List[pathlib.Path].
+        """
         return [x.relative_to(self.data_product_path) for x in self.scan_paths]
 
     @property
     def scan_paths(self: ScanManager) -> List[pathlib.Path]:
-        """Return a list of scans stored in the data_product_path."""
+        """
+        Return a list of the current full scan paths stored in the data_product_path.
+
+        :return: the list of full scan paths.
+        :rtype: List[pathlib.Path].
+        """
         return list(self.data_product_path.glob(f"*/{self.subsystem}/*"))
 
     @property
     def oldest_scan(self: ScanManager) -> VoltageRecorderScan | None:
-        """Return the oldest scan stored in the data_product_path."""
+        """
+        Return the oldest scan stored in the data_product_path.
+
+        :return: the older scan currently stored in the data product path, or None if empty
+        :rtype: VoltageRecorderScan | None
+        """
         self._refresh_scans()
 
         # TODO work out oldest scan, for now return first scan in list

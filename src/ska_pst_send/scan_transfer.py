@@ -31,8 +31,18 @@ class ScanTransfer(threading.Thread):
         exit_cond: threading.Condition,
         logger: logging.Logger | None = None,
         loop_wait: int = 2,
+        dir_perms: int = 0o777,
     ) -> None:
-        """Initialise the ScanTransfer object."""
+        """
+        Initialise the ScanTransfer object.
+
+        :param VoltageRecorderScan local_scan: scan to be transferred to the remote.
+        :param VoltageRecorderScan remote_scan: scan to which the local scan will be transferred.
+        :param threading.Condition exit_cond: condition variable to use to trigger thread termination.
+        :param logging.Logger logger: The logger instance to use.
+        :param int loop_wait: timeout for the main processing loop.
+        :param int dir_perms: octal permissions to apply when creating directories during transfer.
+        """
         threading.Thread.__init__(self, daemon=True)
 
         self.local_scan = local_scan
@@ -41,11 +51,17 @@ class ScanTransfer(threading.Thread):
         self.logger = logger or logging.getLogger(__name__)
         self.completed = False
         self.loop_wait = loop_wait
+        self.default_dir_perms = dir_perms
         self.logger.debug(f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}")
 
     @property
     def untransferred_files(self: ScanTransfer) -> List[VoltageRecorderFile]:
-        """Return the list of untransferred files for the scan."""
+        """
+        Return the list of untransferred files for the scan.
+
+        :return: the list of voltage recorder files
+        :rtype: List[VoltageRecorderFile].
+        """
         # update the local and remote scan file lists
         self.local_scan.update_files()
         self.remote_scan.update_files()
@@ -79,8 +95,8 @@ class ScanTransfer(threading.Thread):
 
                 local_file = local_path / untransferred_file.relative_path
                 remote_file = remote_path / untransferred_file.relative_path
-                self.logger.info(f"copying {untransferred_file.relative_path} to remote")
-                remote_file.parent.mkdir(mode=0o644, parents=True, exist_ok=True)
+                self.logger.info(f"transferring {untransferred_file.relative_path}")
+                remote_file.parent.mkdir(mode=self.default_dir_perms, parents=True, exist_ok=True)
                 shutil.copyfile(local_file, remote_file)
 
             # check if the scan is completed and the ScanProcess has generated the data-product-file

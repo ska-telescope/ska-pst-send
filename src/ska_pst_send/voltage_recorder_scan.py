@@ -33,9 +33,9 @@ class VoltageRecorderScan(Scan):
     ) -> None:
         """Initialise a Voltage Recorder Scan object.
 
-        param data_product_path: base path to the `product` directory
-        param relative_scan_path: path of the scan relative to the data_product_path
-        param logger: python logging instance
+        :param pathlib.Path data_product_path: base path to the `product` directory
+        :param pathlib.Path relative_scan_path: path of the scan relative to the data_product_path
+        :param logging.Logger logger: python logging instance
         """
         Scan.__init__(self, data_product_path, relative_scan_path, logger)
 
@@ -68,7 +68,12 @@ class VoltageRecorderScan(Scan):
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
 
     def generate_data_product_file(self: Scan) -> bool:
-        """Generate the ska-data-product.yaml file."""
+        """
+        Generate the ska-data-product.yaml file.
+
+        :return: flag indicating the generation is complete
+        :rtype: bool
+        """
         # ensure the scan is marked as completed
         if not self.is_complete:
             self.logger.warning("Cannot generate data product file as scan is not marked as completed")
@@ -93,7 +98,12 @@ class VoltageRecorderScan(Scan):
     def next_unprocessed_file(
         self: Scan,
     ) -> Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile):
-        """Return a data and weights file that have not yet been processed into a stat file."""
+        """
+        Return a data and weights file that have not yet been processed into a stat file.
+
+        :return: tuple of voltage recorder files to be processed
+        :rtype: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile)
+        """
         self.update_files()
         for data_file in self._data_files:
             stat_file_path = self.full_scan_path / "stats" / f"{data_file.file_name.stem}.h5"
@@ -108,12 +118,22 @@ class VoltageRecorderScan(Scan):
         return (None, None, None)
 
     def process_file(
-        self: Scan, unprocessed_file: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile)
+        self: Scan,
+        unprocessed_file: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile),
+        dir_perms: int = 0o777,
     ) -> bool:
-        """Process the data and weights file to generate a stat file."""
+        """
+        Process the data and weights file to generate a stat file.
+
+        :param Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile) unprocessed_file
+        unprocessed file
+        :param int dir_perms: octal directory permissions to use on directory creation
+        :return: flag indicating proessing was successful
+        :rtype: bool
+        """
         (data_file, weights_file, stats_file) = unprocessed_file
 
-        stats_file.file_name.parent.mkdir(mode=0o644, parents=True, exist_ok=True)
+        stats_file.file_name.parent.mkdir(mode=dir_perms, parents=True, exist_ok=True)
 
         # actual command to execute when the container is setup
         command = [
@@ -141,6 +161,11 @@ class VoltageRecorderScan(Scan):
         return ok
 
     def get_all_files(self: Scan) -> List[VoltageRecorderFile]:
-        """Return a list of all data, weights, stats and control files."""
+        """
+        Return a list of all data, weights, stats and control files.
+
+        :return: list of all pertitent files for a scan
+        :rtype: List[VoltageRecorderFile]
+        """
         self.update_files()
         return self._data_files + self._weights_files + self._stats_files + self._config_files

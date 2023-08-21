@@ -50,41 +50,59 @@ class Scan:
 
         # then move up the directory tree to the data_product path, pruning directory if empty
         to_prune = self.full_scan_path.parent
-        can_prune = True
-        while can_prune:
+        while True:
             try:
                 delta = to_prune.relative_to(self.data_product_path)
                 if delta == pathlib.Path("."):
                     self.logger.debug("pruned scan_path: stopping prune")
-                    can_prune = False
-                    continue
+                    return
                 try:
                     # remove the directory, if it is empty
                     to_prune.rmdir()
                     to_prune = to_prune.parent
                 except OSError as exc:
                     self.logger.debug(f"found non-empty parent directory, stopping prune: {exc}")
-                    can_prune = False
+                    return
             except ValueError as exc:
                 self.logger.debug(f"walked above data_product_path, stopping prune: {exc}")
-                can_prune = False
+                return
 
     @property
     def is_recording(self: Scan) -> bool:
-        """Return true is the scan been not yet been marked as completed."""
+        """
+        Return true is the scan been not yet been marked as completed.
+
+        :return: flag indicating if the scan is currently recording
+        :rtype: bool
+        """
         return not self._scan_completed_file.exists()
 
     @property
     def data_product_file_exists(self: Scan) -> bool:
-        """Return true if the ska-pst-dataproduct.yaml file exists."""
+        """
+        Return true if the ska-pst-dataproduct.yaml file exists.
+
+        :return: flag indicating the data product file exists
+        :rtype: bool
+        """
         return self._data_product_file.exists()
 
     @property
     def scan_config_file_exists(self: Scan) -> bool:
-        """Return true if the scan-config.json file exists."""
+        """
+        Return true if the scan-config.json file exists.
+
+        :return: flag indicating the scan config file exists
+        :rtype: bool
+        """
         return self._scan_config_file.exists()
 
     @property
     def is_complete(self: Scan) -> bool:
-        """Return true if the scan_completed file exists."""
+        """
+        Return true if the scan_completed file exists.
+
+        :return: flag indicating the scan recording is complete
+        :rtype: bool
+        """
         return self._scan_completed_file.exists()

@@ -13,6 +13,8 @@ import pathlib
 import threading
 from signal import SIGINT, SIGTERM, signal
 
+from ska_ser_logging import configure_logging
+
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
 from .scan_transfer import ScanTransfer
@@ -30,15 +32,24 @@ class SdpTransfer:
         data_product_dashboard: str,
         verbose: bool = False,
     ) -> None:
-        """Initialise an SdpTransfer object."""
+        """
+        Initialise an SdpTransfer object.
+
+        :param pathlib.Path local_path: absolute path to the local (PST) data product directory
+        :param pathlib.Path remote_path: absolute path to the remote (SDP) data product directory
+        :param str subsystem: The PST instance, one of pst-low or pst-mid
+        :param str data_product_dashboard: The URI for connection to the SDP Data Product Dashboard API.
+        :param logging.Logger logger: The logger instance to use.
+        :param bool verbose: Verbosity flag for logging, if true use logging.DEBUG
+        """
         self.local_path = local_path
         self.remote_path = remote_path
         self.ska_subsystem = ska_subsystem
         self.data_product_dashboard = data_product_dashboard
 
         logging_level = logging.DEBUG if verbose else logging.INFO
-        log_format = "%(asctime)s : %(levelname)5s : %(msg)s : %(filename)s:%(lineno)s %(funcName)s()"
-        logging.basicConfig(format=log_format, level=logging_level)
+        configure_logging(level=logging_level)
+
         self.logger = logging.getLogger(__name__)
         self._cond = threading.Condition()
         self._cond_timeout = 10
@@ -90,12 +101,9 @@ class SdpTransfer:
 
                     if self.data_product_dashboard == "disabled":
                         local_scan.delete_scan()
-                        self._persist = False
                     else:
                         # TODO notify the data product dashboard via the client API
                         self.logger.warning("SDP Data Product Dashboard notification not yet implemented")
-                else:
-                    self._persist = False
 
             if self._persist:
                 with self._cond:

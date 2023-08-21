@@ -28,7 +28,14 @@ class ScanProcess(threading.Thread):
         logger: logging.Logger | None = None,
         loop_wait: int = 2,
     ) -> None:
-        """Initialise the ScanProcess object."""
+        """
+        Initialise the ScanProcess object.
+
+        :param VoltageRecorderScan scan: voltage recorder scan to be processed by the run method.
+        :param threading.Condition exit_cond: condition variable to use to trigger thread termination.
+        :param logging.Logger logger: The logger instance to use.
+        :param int loop_wait: timeout for the main processing loop.
+        """
         threading.Thread.__init__(self, daemon=True)
 
         self.scan = scan

@@ -10,7 +10,7 @@
 import pathlib
 
 from ska_pst_send import Scan
-from tests.conftest import create_scan, remove_product
+from tests.conftest import create_scan, remove_send_tempdir
 
 
 def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib.Path) -> None:
@@ -21,11 +21,8 @@ def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib.Path) 
         assert scan.is_recording
         assert scan.data_product_file_exists is False
         assert scan.is_complete is False
-    except Exception as exc:
-        print(exc)
-        assert False
     finally:
-        remove_product(local_product_path)
+        remove_send_tempdir()
 
 
 def test_scan_parameters(scan: Scan) -> None:
@@ -76,4 +73,4 @@ def test_delete_multiple_scans(scan_factory: Scan) -> None:
         count += 1
     assert count == 0
 
-    remove_product(scan1.data_product_path)
+    remove_send_tempdir()

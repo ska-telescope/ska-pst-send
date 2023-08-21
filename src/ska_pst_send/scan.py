@@ -28,8 +28,9 @@ class Scan:
     ) -> None:
         """Init object.
 
-        param data_product_path: The path of the data product directory containing the scan
-        param scan_path: The full path for the scan within the scan
+        :param data_product_path: The path of the data product directory containing the scan.
+        :param relative_scan_path: The path of the scan, relative to the data_product_path.
+        :param logging.Logger logger: The logger instance to use.
         """
         self.data_product_path = data_product_path
         self.relative_scan_path = relative_scan_path

@@ -8,7 +8,11 @@
 """This module contains the pytest tests for the scans."""
 
 import pathlib
-from typing import List
+import subprocess
+from typing import Any, List
+from unittest.mock import MagicMock
+
+import pytest
 
 from ska_pst_send import VoltageRecorderFile, VoltageRecorderScan
 from tests.conftest import create_voltage_recorder_scan, remove_send_tempdir
@@ -57,8 +61,12 @@ def test_next_unprocessed_file(
     data_files: List[str],
     weights_files: List[str],
     stats_files: List[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test the next_unprocessed_file property of VoltageRecorderScan."""
+    mocked_command = MagicMock()
+    monkeypatch.setattr(subprocess, "run", mocked_command)
+
     scan = voltage_recording_scan
 
     sorted_data_files = sorted(data_files)
@@ -76,7 +84,39 @@ def test_next_unprocessed_file(
         assert unprocessed_file[0] == expected[0]
         assert unprocessed_file[1] == expected[1]
 
+        def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+            file: pathlib.Path = unprocessed_file[2].file_name
+            if file.exists():
+                file.unlink()
+            file.touch()
+
+            completed = MagicMock()
+            completed.returncode = 0
+
+            return completed
+
+        mocked_command.side_effect = _process_side_effect
+
         assert scan.process_file(unprocessed_file)
+
+        expected_cmd = [
+            "ska_pst_stat_file_proc",
+            "-d",
+            str(unprocessed_file[0]),
+            "-w",
+            str(unprocessed_file[1]),
+        ]
+
+        mocked_command.assert_called_once_with(
+            expected_cmd,
+            cwd=scan.full_scan_path,
+            shell=False,
+            stdin=None,
+            capture_output=True,
+        )
+
+        mocked_command.reset_mock()
+
         assert unprocessed_file[2].exists
         assert unprocessed_file[2] == expected[2]
 

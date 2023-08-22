@@ -44,7 +44,7 @@ class VoltageRecorderScan(Scan):
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
 
-    def update_files(self: Scan) -> None:
+    def update_files(self: VoltageRecorderScan) -> None:
         """Check the file system for new data, weights and stats files."""
         self._data_files = [
             VoltageRecorderFile(data_file, self.data_product_path)
@@ -67,7 +67,7 @@ class VoltageRecorderScan(Scan):
         if self.scan_config_file_exists:
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
 
-    def generate_data_product_file(self: Scan) -> bool:
+    def generate_data_product_file(self: VoltageRecorderScan) -> bool:
         """
         Generate the ska-data-product.yaml file.
 
@@ -96,7 +96,7 @@ class VoltageRecorderScan(Scan):
 
     @property
     def next_unprocessed_file(
-        self: Scan,
+        self: VoltageRecorderScan,
     ) -> Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile):
         """
         Return a data and weights file that have not yet been processed into a stat file.
@@ -118,7 +118,7 @@ class VoltageRecorderScan(Scan):
         return (None, None, None)
 
     def process_file(
-        self: Scan,
+        self: VoltageRecorderScan,
         unprocessed_file: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile),
         dir_perms: int = 0o777,
     ) -> bool:
@@ -143,7 +143,6 @@ class VoltageRecorderScan(Scan):
             "-w",
             str(weights_file),
         ]
-        command = ["touch", str(stats_file.file_name)]
 
         # improve subprocess check UDP gen in testutils
         self.logger.info(f"running command: {command}")
@@ -157,10 +156,10 @@ class VoltageRecorderScan(Scan):
 
         ok = completed.returncode == 0
         if not ok:
-            self.logger.warning(f"command {command} failed: {completed}")
+            self.logger.warning(f"command {command} failed: {completed.returncode}")
         return ok
 
-    def get_all_files(self: Scan) -> List[VoltageRecorderFile]:
+    def get_all_files(self: VoltageRecorderScan) -> List[VoltageRecorderFile]:
         """
         Return a list of all data, weights, stats and control files.
 

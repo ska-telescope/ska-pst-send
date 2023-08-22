@@ -56,7 +56,7 @@ class ScanProcess(threading.Thread):
                 if self.scan.is_complete:
                     if not self.scan.data_product_file_exists:
                         self.logger.debug("generating data product YAML file")
-                        self.generate_data_product_file()
+                        self.scan.generate_data_product_file()
                     self.completed = True
             else:
                 self.logger.debug(f"processing {unprocessed_file}")

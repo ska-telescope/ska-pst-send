@@ -22,7 +22,7 @@ def test_constructor(voltage_recording_scan: VoltageRecorderScan, scan_files: Li
     """Test the ScanProcess constructor initialises the object as required."""
     scan = voltage_recording_scan
 
-    cond = threading.Condition
+    cond = threading.Condition()
     scan_process = ScanProcess(scan, cond)
     assert scan_process.completed is False
     assert scan_process.is_alive() is False
@@ -72,7 +72,7 @@ def test_process(
     time.sleep(0.5)
 
     # assert there are no more unprocessed files
-    assert scan.next_unprocessed_file == (None, None, None)
+    assert scan.next_unprocessed_file is None
 
     # assert that the scan is still incomplete since the data_product file and scan_completed
     # file do not yet exist

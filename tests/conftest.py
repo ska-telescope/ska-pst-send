@@ -7,6 +7,7 @@
 
 """This module defines elements of the pytest test harness shared by all tests."""
 
+import logging
 import pathlib
 import random
 import shutil
@@ -14,7 +15,7 @@ import string
 import tempfile
 import uuid
 from datetime import datetime
-from typing import Callable, Generator, List
+from typing import Callable, Generator, List, Tuple
 
 import pytest
 
@@ -43,6 +44,12 @@ def remove_send_tempdir() -> None:
 
 
 @pytest.fixture
+def logger() -> logging.Logger:
+    """Get logger to use for logging within tests."""
+    return logging.getLogger(__name__)
+
+
+@pytest.fixture
 def send_tempdir() -> pathlib.Path:
     """Return a path to the test data dir, under which files can be created."""
     return pathlib.Path(tempfile.gettempdir()) / TEST_DATA_DIR
@@ -65,7 +72,7 @@ def scan_id_factory() -> Callable[..., str]:
     """Return a dynamically generated scan_id consisting of a UUID version 4 string."""
 
     def _factory() -> str:
-        return uuid.uuid4()
+        return str(uuid.uuid4())
 
     return _factory
 
@@ -88,13 +95,15 @@ def subsystem_id() -> str:
 
 
 @pytest.fixture
-def scan_path(eb_id: str, subsystem_id: str, scan_id_factory: str) -> pathlib.Path:
+def scan_path(eb_id: str, subsystem_id: str, scan_id_factory: Callable[..., str]) -> pathlib.Path:
     """Return a valid relative scan path."""
     return pathlib.Path(f"{eb_id}/{subsystem_id}/{scan_id_factory()}")
 
 
 @pytest.fixture
-def scan_path_factory(eb_id: str, subsystem_id: str, scan_id_factory: str) -> Callable[..., pathlib.Path]:
+def scan_path_factory(
+    eb_id: str, subsystem_id: str, scan_id_factory: Callable[..., str]
+) -> Callable[..., pathlib.Path]:
     """Return a dynamically created relative scan path."""
 
     def _factory() -> pathlib.Path:
@@ -143,7 +152,7 @@ def scan_files(data_files: List[str], weights_files: List[str]) -> List[str]:
 
 
 @pytest.fixture
-def scan(local_product_path: pathlib.Path, scan_path: pathlib.Path) -> Scan:
+def scan(local_product_path: pathlib.Path, scan_path: pathlib.Path) -> Generator[Scan, None, None]:
     """Return a Scan fixture, which deletes data paths on finalisation."""
     scan = create_scan(local_product_path, scan_path)
     scan._scan_config_file.touch()
@@ -152,10 +161,12 @@ def scan(local_product_path: pathlib.Path, scan_path: pathlib.Path) -> Scan:
 
 
 @pytest.fixture
-def scan_factory(local_product_path: pathlib.Path, scan_path_factory: pathlib.Path) -> Callable[..., Scan]:
+def scan_factory(
+    local_product_path: pathlib.Path, scan_path_factory: Callable[..., pathlib.Path]
+) -> Generator[Callable[..., Scan], None, None]:
     """Return a Scan with dynamically generated scan_id."""
 
-    def _factory():
+    def _factory() -> Scan:
         scan = create_scan(local_product_path, scan_path_factory())
         scan._scan_config_file.touch()
         return scan
@@ -165,7 +176,7 @@ def scan_factory(local_product_path: pathlib.Path, scan_path_factory: pathlib.Pa
 
 @pytest.fixture
 def voltage_recording_scan(
-    local_product_path: pathlib.Path, scan_path: pathlib, scan_files: List[str]
+    local_product_path: pathlib.Path, scan_path: pathlib.Path, scan_files: List[str]
 ) -> Generator[VoltageRecorderScan, None, None]:
     """
     Return a VoltageRecorderScan, initiailsed with 4 data and weights files.
@@ -185,11 +196,11 @@ def voltage_recording_scan(
 
 @pytest.fixture
 def voltage_recording_scan_factory(
-    local_product_path: pathlib.Path, scan_path_factory: pathlib, scan_files: List[str]
-) -> Generator[VoltageRecorderScan, None, None]:
+    local_product_path: pathlib.Path, scan_path_factory: Callable[..., pathlib.Path], scan_files: List[str]
+) -> Generator[Callable[..., VoltageRecorderScan], None, None]:
     """Return a Voltage RecorderScan, with dynamically generated scan_id and 4 data and weights files."""
 
-    def _factory():
+    def _factory() -> VoltageRecorderScan:
         scan = create_voltage_recorder_scan(local_product_path, scan_path_factory())
         scan._scan_config_file.touch()
         for scan_file in scan_files:
@@ -205,9 +216,9 @@ def voltage_recording_scan_factory(
 def local_remote_scans(
     local_product_path: pathlib.Path,
     remote_product_path: pathlib.Path,
-    scan_path: pathlib,
+    scan_path: pathlib.Path,
     scan_files: List[str],
-) -> (VoltageRecorderScan, VoltageRecorderScan):
+) -> Generator[Tuple[VoltageRecorderScan, VoltageRecorderScan], None, None]:
     """
     Return a local and remote VoltageRecorderScan.
 
@@ -228,7 +239,9 @@ def local_remote_scans(
 
 
 @pytest.fixture
-def three_local_scans(voltage_recording_scan_factory: VoltageRecorderScan) -> List[VoltageRecorderScan]:
+def three_local_scans(
+    voltage_recording_scan_factory: Callable[..., VoltageRecorderScan]
+) -> Generator[List[VoltageRecorderScan], None, None]:
     """
     Return 3 VoltageRecorderScans that are dyanmically generated with unique scan_ids.
 

@@ -25,8 +25,8 @@ class ScanProcess(threading.Thread):
         self: ScanProcess,
         scan: VoltageRecorderScan,
         exit_cond: threading.Condition,
+        loop_wait: float = 2,
         logger: logging.Logger | None = None,
-        loop_wait: int = 2,
     ) -> None:
         """
         Initialise the ScanProcess object.
@@ -52,7 +52,7 @@ class ScanProcess(threading.Thread):
 
             # get an unprocessed file
             unprocessed_file = self.scan.next_unprocessed_file
-            if unprocessed_file == (None, None, None):
+            if unprocessed_file is None:
                 if self.scan.is_complete:
                     if not self.scan.data_product_file_exists:
                         self.logger.debug("generating data product YAML file")
@@ -60,7 +60,7 @@ class ScanProcess(threading.Thread):
                     self.completed = True
             else:
                 self.logger.debug(f"processing {unprocessed_file}")
-                result = self.scan.process_file(unprocessed_file)
+                result = self.scan.process_file(unprocessed_file)  # type: ignore
                 self.logger.debug(f"result={result}")
 
             if not self.completed:

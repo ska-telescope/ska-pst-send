@@ -11,7 +11,7 @@ from __future__ import annotations
 import subprocess
 import threading
 import time
-from typing import Any
+from typing import Any, Tuple
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,7 +20,7 @@ from ska_pst_send import SdpTransfer, VoltageRecorderScan
 
 
 def test_sdp_transfer_process(
-    local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan),
+    local_remote_scans: Tuple[VoltageRecorderScan, VoltageRecorderScan],
     subsystem_id: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -36,7 +36,7 @@ def test_sdp_transfer_process(
     def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
         # ensure the file is created
         for sf in local_scan._stats_files:
-            (local_scan.full_scan_path / sf).touch()
+            (local_scan.full_scan_path / sf.data_product_path).touch()
 
         completed = MagicMock()
         completed.returncode = 0

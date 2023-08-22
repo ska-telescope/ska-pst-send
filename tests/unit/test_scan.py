@@ -8,6 +8,7 @@
 """This module contains the pytest tests for the scans."""
 
 import pathlib
+from typing import Callable
 
 from ska_pst_send import Scan
 from tests.conftest import create_scan, remove_send_tempdir
@@ -51,7 +52,7 @@ def test_delete_scan(scan: Scan) -> None:
     assert scan.full_scan_path.exists() is False
 
 
-def test_delete_multiple_scans(scan_factory: Scan) -> None:
+def test_delete_multiple_scans(scan_factory: Callable[..., Scan]) -> None:
     """Test that Deleting multiple scans works as corrected with directory tree pruning."""
     scan1 = scan_factory()
     scan2 = scan_factory()

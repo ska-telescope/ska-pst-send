@@ -15,6 +15,7 @@ __all__ = [
 import logging
 import os
 import pathlib
+import tempfile
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -26,20 +27,24 @@ from astropy.coordinates import Angle, SkyCoord
 from .dataproduct_file_manager import DadaFileManager
 from .metadata import PstFiles, PstMetaData, PstObsCore
 
-DEFAULT_DSP_MOUNT = "/tmp"
-INTERFACE = "http://schema.skao.int/ska-data-product-meta/0.1"
-CONFIG_IMAGE = "artefact.skao.int/ska-pst/ska-pst"
-CONFIG_VERSION = "0.1.3"
+DEFAULT_DSP_MOUNT: pathlib.Path = pathlib.Path(tempfile.gettempdir())
+INTERFACE: str = "http://schema.skao.int/ska-data-product-meta/0.1"
+CONFIG_IMAGE: str = "artefact.skao.int/ska-pst/ska-pst"
+CONFIG_VERSION: str = "0.1.3"
 
 
 class MetaDataBuilder:
     """Class used for building metadata files."""
 
-    def __init__(self: MetaDataBuilder, logger: logging.Logger | None = None) -> None:
+    def __init__(
+        self: MetaDataBuilder,
+        dsp_mount_path: pathlib.Path | None = None,
+        logger: logging.Logger | None = None,
+    ) -> None:
         """Create instance of PST metadata object."""
         self.logger = logger or logging.getLogger(__name__)
-        self._dsp_mount_path = DEFAULT_DSP_MOUNT
-        self._dada_file_manager = []
+        self._dsp_mount_path = pathlib.Path(DEFAULT_DSP_MOUNT)
+        self._dada_file_manager: DadaFileManager | None = None
         self._pst_metadata = PstMetaData(interface=INTERFACE)
 
     def init_dada_file_manager(self: MetaDataBuilder) -> None:
@@ -48,12 +53,13 @@ class MetaDataBuilder:
         Called upon by the main python application after the marker file is written by ska-pst-dsp.
         """
         env_dsp_mount_path = os.environ.get("PST_DSP_MOUNT")
-        self._dsp_mount_path = env_dsp_mount_path if env_dsp_mount_path else "/tmp"
-        self._dada_file_manager = DadaFileManager(pathlib.Path(self._dsp_mount_path))
+        self._dsp_mount_path = pathlib.Path(env_dsp_mount_path) if env_dsp_mount_path else DEFAULT_DSP_MOUNT
+        self._dada_file_manager = DadaFileManager(folder=pathlib.Path(self._dsp_mount_path))
 
-    def build_metadata(self: MetaDataBuilder):
+    def build_metadata(self: MetaDataBuilder) -> None:
         """Build the PstMetaData object."""
         try:
+            assert self._dada_file_manager is not None, "Expected init_dada_file_manager to have been called."
             assert len(self._dada_file_manager.data_files) > 0, "Expected at least 1 data file"
             assert len(self._dada_file_manager.weights_files) > 0, "Expected at least 1 weights file"
 
@@ -85,8 +91,8 @@ class MetaDataBuilder:
 
     def build_config(self: MetaDataBuilder) -> None:
         """Build PstConfig. Placeholder for replacing defaults."""
-        self._config.image = CONFIG_IMAGE
-        self._config.version = CONFIG_VERSION
+        self._pst_metadata.config.image = CONFIG_IMAGE
+        self._pst_metadata.config.version = CONFIG_VERSION
 
     def build_files(self: MetaDataBuilder) -> None:
         """Build PstFiles used for file block in metadata file.."""
@@ -150,7 +156,7 @@ class MetaDataBuilder:
         stt_crd2 = first_file.stt_crd2
 
         # Populate metadata fields using the header
-        obs_id = scan_id
+        obs_id = str(scan_id)
         target_name = self.dada_file_manager.data_files[0].source
 
         dec_decimal = Angle(stt_crd2, unit="degree")
@@ -246,7 +252,7 @@ class MetaDataBuilder:
 
         self._pst_metadata.obscore = obscore
 
-    def write_metadata(self: MetaDataBuilder, file_name: str = "ska-data-product.yaml"):
+    def write_metadata(self: MetaDataBuilder, file_name: str = "ska-data-product.yaml") -> None:
         """Write YAML object to a YAML file."""
         absolute_path = f"{self._dsp_mount_path}/{file_name}"
         with open(absolute_path, "w") as yaml_file:
@@ -258,10 +264,22 @@ class MetaDataBuilder:
 
         dada_file_manager as a property of MetaDataBuilder.
         """
+        assert self._dada_file_manager is not None, (
+            "Expected dada_file_manager to have been initialised. "
+            "Perhaps init_dada_file_manager has not been called."
+        )
         return self._dada_file_manager
 
+    @dada_file_manager.setter
+    def dada_file_manager(self: MetaDataBuilder, dada_file_manager: DadaFileManager) -> None:
+        """Set the DADA file manager to use when creating metadata file.
+
+        :param dada_file_manager: the DADA file manager to use when creating metadata file.
+        """
+        self._dada_file_manager = dada_file_manager
+
     @property
-    def dsp_mount_path(self: MetaDataBuilder) -> str:
+    def dsp_mount_path(self: MetaDataBuilder) -> pathlib.Path:
         """Getter public method.
 
         dsp_mount_path as a property of MetaDataBuilder.
@@ -269,15 +287,17 @@ class MetaDataBuilder:
         return self._dsp_mount_path
 
     @dsp_mount_path.setter
-    def dsp_mount_path(self: MetaDataBuilder, path: str) -> None:
+    def dsp_mount_path(self: MetaDataBuilder, path: str | pathlib.Path) -> None:
         """Setter method.
 
         dsp_mount_path as a property of MetaDataBuilder.
         param path: Absolute path containing dada files.
         """
+        # if already a Path this returns a path
+        path = pathlib.Path(path)
         self._dsp_mount_path = path
         if self._dada_file_manager:
-            self._dada_file_manager.set_dsp_mount_path(path)
+            self._dada_file_manager.folder = path
 
     @property
     def pst_metadata(self: MetaDataBuilder) -> PstMetaData:

@@ -72,14 +72,14 @@ class PstFiles:
     :ivar path:
     :vartype path: str
     :ivar size:
-    :vartype size: str
+    :vartype size: int
     :ivar status:
     :vartype status: str
     """
 
     description: str = field(default="")
     path: str = field(default="")
-    size: str = field(default="")
+    size: int = field(default=0)
     status: str = field(default="done")
 
 
@@ -149,26 +149,26 @@ class PstObsCore:
 
     dataproduct_type: str = field(default="timeseries")
     dataproduct_subtype: str = field(default="voltages")
-    calib_level: str = field(default="0")
+    calib_level: int = field(default=0)
     obs_id: str = field(default="")
-    access_estsize: str = field(default="")
+    access_estsize: int = field(default=0)
     target_name: str = field(default="")
-    s_ra: str = field(default="")
-    s_dec: str = field(default="")
+    s_ra: float = field(default=0.0)
+    s_dec: float = field(default=0.0)
     t_min: str = field(default="")
     t_max: str = field(default="")
-    t_resolution: str = field(default="")
-    t_exptime: str = field(default="")
+    t_resolution: float = field(default=0.0)
+    t_exptime: float = field(default=0.0)
     facility_name: str = field(default="SKA-Observatory")
     instrument_name: str = field(default="")
-    pol_xel: str = field(default="")
+    pol_xel: int = field(default=0)
     pol_states: str = field(default="")
-    em_xel: str = field(default="")
+    em_xel: int = field(default=0)
     em_unit: str = field(default="Hz")
-    em_min: str = field(default="")
-    em_max: str = field(default="")
+    em_min: float = field(default=0.0)
+    em_max: float = field(default=0.0)
     em_res_power: str = field(default="")
-    em_resolution: str = field(default="")
+    em_resolution: float = field(default=0.0)
     o_ucd: str = field(default="null")
 
 

@@ -12,6 +12,7 @@ import logging
 import pathlib
 import threading
 from signal import SIGINT, SIGTERM, signal
+from types import FrameType
 
 from ska_ser_logging import configure_logging
 
@@ -76,15 +77,15 @@ class SdpTransfer:
 
                 # construct a remote scan object for comparison
                 remote_scan = VoltageRecorderScan(
-                    self.remote_path, local_scan.relative_scan_path, self.logger
+                    self.remote_path, local_scan.relative_scan_path, logger=self.logger
                 )
 
                 # perform post-processing on the scan to generate output files for transfer
-                scan_process = ScanProcess(local_scan, self._cond, self.logger)
+                scan_process = ScanProcess(local_scan, self._cond, logger=self.logger)
                 scan_process.start()
 
                 # perform the file transfer of output files to the remote storage
-                scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, self.logger)
+                scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, logger=self.logger)
                 scan_transfer.start()
 
                 self.logger.info(f"Processing {local_scan.relative_scan_path}")
@@ -144,7 +145,7 @@ def main() -> None:
     sdp_transfer = SdpTransfer(**args)
 
     # handle SIGINT gracefully to prevent partially transferred files
-    def signal_handler(sig, frame):
+    def signal_handler(signal: int, frame: FrameType | None) -> None:
         sys.stderr.write("CTRL + C pressed\n")
         sdp_transfer.interrrupt_processing()
 

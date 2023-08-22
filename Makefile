@@ -79,3 +79,17 @@ PYTHON_SWITCHES_FOR_BLACK = --force-exclude=src/ska_pst_lmc_proto
 PYTHON_SWITCHES_FOR_ISORT = --skip-glob="*/__init__.py" --py 39 --thirdparty=ska_pst_lmc_proto
 PYTHON_SWITCHES_FOR_PYLINT = --disable=W,C,R --ignored-modules="ska_pst_lmc_proto"
 PYTHON_SWITCHES_FOR_AUTOFLAKE ?= --in-place --remove-unused-variables --remove-all-unused-imports --recursive --ignore-init-module-imports
+
+mypy:
+	$(PYTHON_RUNNER) mypy --install-types --non-interactive
+	$(PYTHON_RUNNER) mypy --config-file mypy.ini $(PYTHON_LINT_TARGET)
+
+flake8:
+	$(PYTHON_RUNNER) flake8 --show-source --statistics $(PYTHON_SWITCHES_FOR_FLAKE8) $(PYTHON_LINT_TARGET)
+
+python-post-format:
+	$(PYTHON_RUNNER) autoflake $(PYTHON_SWITCHES_FOR_AUTOFLAKE) $(PYTHON_LINT_TARGET)
+
+python-post-lint: mypy
+
+.PHONY: python-post-format, python-post-lint, mypy, flake8

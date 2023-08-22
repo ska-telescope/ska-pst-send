@@ -9,23 +9,23 @@
 
 import threading
 import time
-from typing import List
+from typing import List, Tuple
 
 from ska_pst_send import ScanTransfer, VoltageRecorderScan
 
 
-def test_constructor(local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan)) -> None:
+def test_constructor(local_remote_scans: Tuple[VoltageRecorderScan, VoltageRecorderScan]) -> None:
     """Test the ScanTransfer construction initialises the object correctly."""
     (local_scan, remote_scan) = local_remote_scans
 
-    cond = threading.Condition
+    cond = threading.Condition()
     scan_transfer = ScanTransfer(local_scan, remote_scan, cond)
     assert scan_transfer.completed is False
     assert scan_transfer.is_alive() is False
 
 
 def test_transfer(
-    local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan), scan_files: List[str]
+    local_remote_scans: Tuple[VoltageRecorderScan, VoltageRecorderScan], scan_files: List[str]
 ) -> None:
     """Test the ScanTransfer can fully transfer a completed scan."""
     (local_scan, remote_scan) = local_remote_scans
@@ -58,7 +58,7 @@ def test_transfer(
 
 
 def test_aborted_transfer(
-    local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan), scan_files: List[str]
+    local_remote_scans: Tuple[VoltageRecorderScan, VoltageRecorderScan], scan_files: List[str]
 ) -> None:
     """Test that aborting the ScanTransfer thread via threading.Condition results in thread termination."""
     (local_scan, remote_scan) = local_remote_scans

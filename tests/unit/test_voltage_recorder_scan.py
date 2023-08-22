@@ -18,7 +18,7 @@ from ska_pst_send import VoltageRecorderFile, VoltageRecorderScan
 from tests.conftest import create_voltage_recorder_scan, remove_send_tempdir
 
 
-def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib) -> None:
+def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib.Path) -> None:
     """Test the VoltageRecorderScan constructor."""
     try:
         scan = create_voltage_recorder_scan(local_product_path, scan_path)
@@ -74,8 +74,9 @@ def test_next_unprocessed_file(
     sorted_stats_files = sorted(stats_files)
 
     # process each of the four data files, noting this will only work whilst the processor is "touch"
-    for i in range(len(data_files)):
+    for (i, df) in enumerate(data_files):
         unprocessed_file = scan.next_unprocessed_file
+        assert unprocessed_file is not None, f"Expected that there should be an unprocessed file for {df}"
         expected = (
             VoltageRecorderFile(scan.full_scan_path / sorted_data_files[i], scan.data_product_path),
             VoltageRecorderFile(scan.full_scan_path / sorted_weights_files[i], scan.data_product_path),
@@ -120,4 +121,4 @@ def test_next_unprocessed_file(
         assert unprocessed_file[2].exists
         assert unprocessed_file[2] == expected[2]
 
-    assert scan.next_unprocessed_file == (None, None, None)
+    assert scan.next_unprocessed_file is None

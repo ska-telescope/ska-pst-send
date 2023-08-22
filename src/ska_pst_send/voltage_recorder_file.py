@@ -27,7 +27,7 @@ class VoltageRecorderFile:
         """
         self.file_name = file_name
         self.data_product_path = data_product_path
-        self._file_number = None
+        self._file_number: int | None = None
 
     def __str__(self: VoltageRecorderFile) -> str:
         """
@@ -48,17 +48,21 @@ class VoltageRecorderFile:
         :return: brief description of the object
         :rtype: str
         """
-        return f"{self.relative_path}"
+        return (
+            f"VoltageRecorderFile(file_number={self.file_number}, file_size={self.file_size}, "
+            f"relative_path={self.relative_path})"
+        )
 
-    def __eq__(self: VoltageRecorderFile, other: VoltageRecorderFile) -> bool:
+    def __eq__(self: VoltageRecorderFile, other: object | None) -> bool:
         """
         Return the equality between two VoltageRecorderFile objects.
 
         :return: flag indicating object equality
         :rtype: bool
         """
-        if other is None:
+        if other is None or not isinstance(other, VoltageRecorderFile):
             return False
+
         return (
             self.file_number == other.file_number
             and self.file_size == other.file_size

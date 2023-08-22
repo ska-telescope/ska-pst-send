@@ -84,25 +84,23 @@ class VoltageRecorderScan(Scan):
             self.logger.warning("Cannot generate data product file as unprocessed files exist")
             return False
 
-        data_product_file = self.full_scan_path / "ska-data-product.yaml"
-        self.logger.debug(f"Generating data_product_file: {data_product_file}")
-
         metadata_builder = MetaDataBuilder()
         metadata_builder.dsp_mount_path = self.full_scan_path
-        metadata_builder.dada_file_manager = DadaFileManager(metadata_builder.dsp_mount_path)
+        metadata_builder.dada_file_manager = DadaFileManager(folder=metadata_builder.dsp_mount_path)
         metadata_builder.build_metadata()
-        metadata_builder.write_metadata(filename=str(data_product_file))
+        # this call will write to file self.full_scan_path / "ska-data-product.yaml"
+        metadata_builder.write_metadata()
         return True
 
     @property
     def next_unprocessed_file(
         self: VoltageRecorderScan,
-    ) -> Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile):
+    ) -> Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] | None:
         """
         Return a data and weights file that have not yet been processed into a stat file.
 
         :return: tuple of voltage recorder files to be processed
-        :rtype: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile)
+        :rtype: Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile]
         """
         self.update_files()
         for data_file in self._data_files:
@@ -115,17 +113,17 @@ class VoltageRecorderScan(Scan):
                     self._weights_files[file_number],
                     VoltageRecorderFile(stat_file_path, self.data_product_path),
                 )
-        return (None, None, None)
+        return None
 
     def process_file(
         self: VoltageRecorderScan,
-        unprocessed_file: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile),
+        unprocessed_file: Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile],
         dir_perms: int = 0o777,
     ) -> bool:
         """
         Process the data and weights file to generate a stat file.
 
-        :param Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile) unprocessed_file
+        :param Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] unprocessed_file
         unprocessed file
         :param int dir_perms: octal directory permissions to use on directory creation
         :return: flag indicating proessing was successful

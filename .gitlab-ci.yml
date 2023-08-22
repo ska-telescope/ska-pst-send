@@ -9,14 +9,7 @@ variables:
   OCI_IMAGE_BUILD_CONTEXT: $(PWD)
   SKA_GEMNASIUM_IMAGE: artefact.skao.int/ska-cicd-gemnasium-scanning-alpine:0.8.2
   SKA_RELEASE_REGISTRY: artefact.skao.int
-  GITLAB_OCI_SEND_REGISTRY: registry.gitlab.com/ska-telescope/pst/ska-pst-send
-  SEND_BASE_IMAGE: library/ubuntu:22.04
-  PST_OCI_SEND_BUILDER_IMAGE: ska-pst-send-builder
-  PST_OCI_SEND_BUILDER_TAG: "0.0.0"
-  PST_OCI_SEND_BUILDER: $PST_OCI_SEND_BUILDER_IMAGE:$PST_OCI_SEND_BUILDER_TAG
-  PST_OCI_SEND_RUNTIME_IMAGE: library/ubuntu
-  PST_OCI_SEND_RUNTIME_TAG: "22.04"
-  PST_SEND_OCI_RUNTIME: $PST_OCI_SEND_RUNTIME_IMAGE:$PST_OCI_SEND_RUNTIME_TAG
+  PST_DEV_REGISTRY: registry.gitlab.com/ska-telescope/pst
   OCI_IMAGES: ska-pst-send-builder ska-pst-send
 
 

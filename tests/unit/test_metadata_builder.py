@@ -75,7 +75,7 @@ pst_obscore = PstObsCore(
 def test_write_metadata():
     """Test writing metadata dictionary into yaml file."""
     pst_mdb = MetaDataBuilder()
-    pst_mdb.dsp_mount_path = "/tmp/"
+    pst_mdb.dsp_mount_path = "/tmp"
 
     pst_mdb.pst_metadata.interface = "http://schema.skao.int/ska-data-product-meta/0.1"
     pst_mdb.pst_metadata.execution_block = "eb-19700101-485"

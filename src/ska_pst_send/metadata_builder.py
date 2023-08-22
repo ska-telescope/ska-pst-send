@@ -85,8 +85,8 @@ class MetaDataBuilder:
 
     def build_config(self: MetaDataBuilder) -> None:
         """Build PstConfig. Placeholder for replacing defaults."""
-        self._config.image = CONFIG_IMAGE
-        self._config.version = CONFIG_VERSION
+        self._pst_metadata.config.image = CONFIG_IMAGE
+        self._pst_metadata.config.version = CONFIG_VERSION
 
     def build_files(self: MetaDataBuilder) -> None:
         """Build PstFiles used for file block in metadata file.."""

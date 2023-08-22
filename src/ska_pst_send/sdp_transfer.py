@@ -15,6 +15,7 @@ from signal import SIGINT, SIGTERM, signal
 
 from ska_ser_logging import configure_logging
 
+from .dpd_api_client import DpdApiClient
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
 from .scan_transfer import ScanTransfer
@@ -102,8 +103,19 @@ class SdpTransfer:
                     if self.data_product_dashboard == "disabled":
                         local_scan.delete_scan()
                     else:
-                        # TODO notify the data product dashboard via the client API
-                        self.logger.warning("SDP Data Product Dashboard notification not yet implemented")
+                        self.logger.debug(
+                            f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}"
+                        )
+                        dpd_api_client = DpdApiClient(endpoint=self.data_product_dashboard)
+                        dpd_api_client.reindex_dataproducts()
+
+                        if pathlib.Path.exists(f"{self.remote_path}/ska-data-product.yaml"):
+                            search_value = f"{self.remote_path}/ska-data-product.yaml"
+                            search_value.replace("/mnt/sdp/product", "")
+                            dpd_api_client.search_metadata(search_value=search_value)
+                            local_scan.delete_scan()
+                        else:
+                            self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
 
             if self._persist:
                 with self._cond:
@@ -135,7 +147,7 @@ def main() -> None:
         "--data_product_dashboard",
         type=str,
         default="disabled",
-        help="endpoint for the SDP Data Product Dashboard REST API [e.g. http://127.0.0.1:8888/api]",
+        help="endpoint for the SDP Data Product Dashboard REST API [e.g. http://127.0.0.1:8888]",
     )
     p.add_argument("-v", "--verbose", action="store_true")
 

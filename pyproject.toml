@@ -8,6 +8,7 @@ authors = ["Jesmigel A. Cantos <jesmigel.developer@gmail.com>"]
 python = "^3.10"
 astropy = "^5.3.1"
 pyyaml = "^6.0.1"
+ska-ser-logging = "^0.4.1+0a677a67"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "^1.4"
@@ -30,6 +31,9 @@ pytest-cov = "^3.0.0"
 [[tool.poetry.source]]
 name = 'ska-nexus'
 url = 'https://artefact.skao.int/repository/pypi-internal/simple'
+
+[tool.poetry.scripts]
+sdp_transfer = "ska_pst_send.sdp_transfer:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

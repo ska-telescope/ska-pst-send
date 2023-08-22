@@ -21,34 +21,32 @@ PYTHON_PUBLISH_URL:=https://artefact.skao.int/repository/pypi-internal/
 PYTHON_SWITCHES_FOR_BLACK :=
 PYTHON_SWITCHES_FOR_ISORT :=
 
-DEV_IMAGE					?=artefact.skao.int/ska-pst-send-builder
-DEV_TAG						=`grep -m 1 -o '[0-9].*' .release`
-SEND_BASE_IMAGE				:=library/ubuntu:22.04
-PST_OCI_SEND_BUILDER_IMAGE	:=ska-pst-send-builder
-PST_OCI_SEND_BUILDER_TAG	:=0.0.0
-PST_OCI_SEND_BUILDER		:=$(PST_OCI_SEND_BUILDER_IMAGE):$(PST_OCI_SEND_BUILDER_TAG)
-PST_OCI_SEND_RUNTIME_IMAGE	:=library/ubuntu
-PST_OCI_SEND_RUNTIME_TAG	:=22.04
-PST_SEND_OCI_RUNTIME		:=$(PST_OCI_SEND_RUNTIME_IMAGE):$(PST_OCI_SEND_RUNTIME_TAG)
+DEV_IMAGE ?= artefact.skao.int/ska-pst-send-builder
+DEV_TAG = `grep -m 1 -o '[0-9].*' .release`
+SEND_BASE_IMAGE ?= library/ubuntu:22.04
+PST_OCI_SEND_BUILDER_IMAGE ?= ska-pst-send-builder
+PST_OCI_SEND_BUILDER_TAG ?= 0.0.0
+PST_OCI_SEND_RUNTIME_IMAGE ?= library/ubuntu
+PST_OCI_SEND_RUNTIME_TAG ?=22.04
+PST_OCI_STAT_RUNTIME_IMAGE ?= ska-pst-stat
+PST_OCI_STAT_RUNTIME_TAG ?= 0.3.0
 
-PST_DEV_REGISTRY=registry.gitlab.com/ska-telescope/pst
-OCI_REGISTRY ?= $(PST_DEV_REGISTRY)
-
-SKA_PST_STAT:=ska-pst-stat
-SKA_PST_STAT_TAG ?= 0.3.0
-
-ifeq ($(OCI_REGISTRY),$(PST_DEV_REGISTRY))
+PST_DEV_REGISTRY ?= registry.gitlab.com/ska-telescope/pst
+ifeq ($(CAR_OCI_REGISTRY_HOST),$(PST_DEV_REGISTRY))
   # gitlab paths are doubled
-  SKA_PST_STAT:=ska-pst-stat/ska-pst-stat
-  SKA_PST_DSP:=ska-pst-dsp/ska-pst-dsp
-  SKA_PST_RECV:=ska-pst-recv/ska-pst-recv
-  SKA_PST_LMC:=ska-pst-lmc/ska-pst-lmc
+  PST_OCI_SEND_BUILDER_IMAGE :=ska-pst-send/ska-pst-send-builder
+  PST_OCI_SEND_RUNTIME_IMAGE :=ska-pst-send/ska-pst-send
+  PST_OCI_STAT_RUNTIME_IMAGE :=ska-pst-stat/ska-pst-stat
 endif
+
+PST_OCI_SEND_BUILDER := $(PST_OCI_SEND_BUILDER_IMAGE):$(PST_OCI_SEND_BUILDER_TAG)
+PST_OCI_SEND_RUNTIME := $(PST_OCI_SEND_RUNTIME_IMAGE):$(PST_OCI_SEND_RUNTIME_TAG)
+PST_OCI_STAT_RUNTIME := $(PST_OCI_STAT_RUNTIME_IMAGE):$(PST_OCI_STAT_RUNTIME_TAG)
 
 OCI_BUILD_ADDITIONAL_ARGS	= --build-arg SEND_BASE_IMAGE=$(SEND_BASE_IMAGE) \
 		--build-arg SEND_BUILDER=$(PST_OCI_SEND_BUILDER) \
-		--build-arg SEND_RUNTIME=$(PST_SEND_OCI_RUNTIME) \
-		--build-arg STAT_RUNTIME_IMAGE=$(OCI_REGISTRY)/$(SKA_PST_STAT):$(SKA_PST_STAT_TAG)
+		--build-arg SEND_RUNTIME=$(PST_OCI_SEND_RUNTIME) \
+		--build-arg STAT_RUNTIME_IMAGE=$(PST_OCI_STAT_RUNTIME)
 
 docs-pre-build:
 	pip install -r docs/requirements.txt

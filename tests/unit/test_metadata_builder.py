@@ -77,6 +77,8 @@ def test_write_metadata(send_tempdir: pathlib.Path) -> None:
     """Test writing metadata dictionary into yaml file."""
     pst_mdb = MetaDataBuilder(dsp_mount_path=send_tempdir)
 
+    assert pst_mdb.dsp_mount_path == send_tempdir, f"Expected {pst_mdb.dsp_mount_path} to be {send_tempdir}"
+
     pst_mdb.pst_metadata.interface = "http://schema.skao.int/ska-data-product-meta/0.1"
     pst_mdb.pst_metadata.execution_block = "eb-19700101-485"
     pst_mdb.pst_metadata.files = pst_files

@@ -52,7 +52,11 @@ def logger() -> logging.Logger:
 @pytest.fixture
 def send_tempdir() -> pathlib.Path:
     """Return a path to the test data dir, under which files can be created."""
-    return pathlib.Path(tempfile.gettempdir()) / TEST_DATA_DIR
+    send_tempdir = pathlib.Path(tempfile.gettempdir()) / TEST_DATA_DIR
+    if not send_tempdir.exists():
+        send_tempdir.mkdir(mode=0o777, parents=True, exist_ok=True)
+
+    return send_tempdir
 
 
 @pytest.fixture

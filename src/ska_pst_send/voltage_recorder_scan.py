@@ -84,8 +84,7 @@ class VoltageRecorderScan(Scan):
             self.logger.warning("Cannot generate data product file as unprocessed files exist")
             return False
 
-        metadata_builder = MetaDataBuilder()
-        metadata_builder.dsp_mount_path = self.full_scan_path
+        metadata_builder = MetaDataBuilder(dsp_mount_path=self.full_scan_path)
         metadata_builder.dada_file_manager = DadaFileManager(folder=metadata_builder.dsp_mount_path)
         metadata_builder.build_metadata()
         # this call will write to file self.full_scan_path / "ska-data-product.yaml"

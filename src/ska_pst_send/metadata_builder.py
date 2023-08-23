@@ -43,7 +43,7 @@ class MetaDataBuilder:
     ) -> None:
         """Create instance of PST metadata object."""
         self.logger = logger or logging.getLogger(__name__)
-        self._dsp_mount_path = pathlib.Path(DEFAULT_DSP_MOUNT)
+        self._dsp_mount_path = dsp_mount_path or pathlib.Path(DEFAULT_DSP_MOUNT)
         self._dada_file_manager: DadaFileManager | None = None
         self._pst_metadata = PstMetaData(interface=INTERFACE)
 

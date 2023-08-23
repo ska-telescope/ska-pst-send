@@ -101,45 +101,45 @@ class PstObsCore:
                        or heavily processed survey fields
                        4 = Analysis data products generated after some scientific data manipulation or
                        interpretation.
-    :vartype calib_level: str
+    :vartype calib_level: int
     :ivar obs_id: scan id
     :vartype obs_id: str
     :ivar access_estsize: value derived from the recorded data files upon stop_scan()
-    :vartype access_estsize: str
+    :vartype access_estsize: int
     :ivar target_name: Astronomical object observed
     :vartype target_name: str
     :ivar s_ra: Centre of observation right ascension, ICRS
-    :vartype s_ra: str
+    :vartype s_ra: float
     :ivar s_dec: Centre of observation declination, ICRS
-    :vartype s_dec: str
+    :vartype s_dec: float
     :ivar t_min: Start time in MJD
     :vartype t_min: str
     :ivar t_max: Stop time in MJD
     :vartype t_max: str
     :ivar t_resolution: Temporal resolution FWHM (full width at half maximum)
-    :vartype t_resolution: str
+    :vartype t_resolution: float
     :ivar t_exptime: Total exposure time.
-    :vartype t_exptime: str
+    :vartype t_exptime: float
     :ivar facility_name: The observatory or facility used to collect the data
     :vartype facility_name: str
     :ivar instrument_name: The name of the instrument used for the acquisition of the observation
     :vartype instrument_name: str
     :ivar pol_xel: Number of polarization samples
-    :vartype pol_xel: str
+    :vartype pol_xel: int
     :ivar pol_states: List of polarization states
     :vartype pol_states: str
     :ivar em_xel: Number of elements along the spectral axis
-    :vartype em_xel: str
+    :vartype em_xel: int
     :ivar em_unit: Spectral coordinates unit type. Defaults to Hz.
     :vartype em_unit: str
     :ivar em_min: Start in spectral coordinates (vacuum wavelength)
-    :vartype em_min: str
+    :vartype em_min: float
     :ivar em_max: Stop in spectral coordinates (vacuum wavelength)
-    :vartype em_max: str
+    :vartype em_max: float
     :ivar em_res_power: Spectral resolving power
     :vartype em_res_power: str
     :ivar em_resolution: Spectral resolution
-    :vartype em_resolution: str
+    :vartype em_resolution: float
     :ivar o_ucd: Unified Content Descriptor of observable e.g. phot.count or phot.flux.density
                  see section 4.18 and B.6.4.1 in Obscore standard,
                  UCD1+ controlled vocabulary and especially list of observables),

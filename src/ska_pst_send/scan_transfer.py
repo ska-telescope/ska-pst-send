@@ -29,9 +29,9 @@ class ScanTransfer(threading.Thread):
         local_scan: VoltageRecorderScan,
         remote_scan: VoltageRecorderScan,
         exit_cond: threading.Condition,
-        logger: logging.Logger | None = None,
-        loop_wait: int = 2,
+        loop_wait: float = 2,
         dir_perms: int = 0o777,
+        logger: logging.Logger | None = None,
     ) -> None:
         """
         Initialise the ScanTransfer object.
@@ -77,7 +77,7 @@ class ScanTransfer(threading.Thread):
 
         return sorted(untransferred_files)
 
-    def run(self: ScanTransfer):
+    def run(self: ScanTransfer) -> None:
         """Run the transfer for the Scan from local to remote."""
         self.logger.debug("starting transfer thread")
         local_path = self.local_scan.data_product_path

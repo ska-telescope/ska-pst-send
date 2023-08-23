@@ -15,7 +15,6 @@ from types import TracebackType
 from typing import Any, Dict, List, Tuple
 
 import nptyping as npt
-import numpy as np
 
 __all__ = [
     "DadaFileManager",
@@ -66,7 +65,7 @@ class DadaFileManager:
         data_paths.sort()
         weights_paths.sort()
         data_files = [DadaFileReader(f) for f in data_paths]
-        weights_files = [DadaFileReader(f) for f in weights_paths]
+        weights_files = [WeightsFileReader(f) for f in weights_paths]
 
         self._data_files = data_files
         self._weights_files = weights_files
@@ -242,17 +241,17 @@ class DadaFileReader:
         return self._header["BW"]
 
     @property
-    def npol(self: DadaFileManager) -> str:
+    def npol(self: DadaFileReader) -> str:
         """Get the NPOL value from header."""
         return self._header["NPOL"]
 
     @property
-    def stt_crd1(self: DadaFileManager) -> str:
+    def stt_crd1(self: DadaFileReader) -> str:
         """Get the STT_CRD1 value from header."""
         return self._header["STT_CRD1"]
 
     @property
-    def stt_crd2(self: DadaFileManager) -> str:
+    def stt_crd2(self: DadaFileReader) -> str:
         """Get the STT_CRD2 value from header."""
         return self._header["STT_CRD2"]
 
@@ -351,18 +350,13 @@ class WeightsFileReader(DadaFileReader):
         self._read_header()
 
         # extract the required parameters from the header
-        self.nchan = int(self._header["NCHAN"])
-        self.nbit = int(self._header["NBIT"])
-        self.nsamp_per_weight = int(self._header["NSAMP_PER_WEIGHT"])
-        self.packet_weights_size = int(self._header["PACKET_WEIGHTS_SIZE"])
-        self.packet_scales_size = int(self._header["PACKET_SCALES_SIZE"])
         udp_format = self._header["UDP_FORMAT"]
 
         # the CBF to PSR ICD specifies all weights a 16 bits per sample
         assert self.nbit == 16, f"Expected nbit={self.nbit} to be 16"
 
         # compute the number of relative weights in each packet
-        packet_nsamp = self.get_udp_format_config(udp_format)["packet_nsamp"]
+        packet_nsamp = WeightsFileReader.get_udp_format_config(udp_format)["packet_nsamp"]
 
         msg = f"""Expect packet_nsamp={packet_nsamp}
         a multiple of {self.nsamp_per_weight}"""
@@ -443,6 +437,7 @@ class WeightsFileReader(DadaFileReader):
                """
         assert self.packet_weights_size % nbit_as_bytes == 0, msg
 
+    @staticmethod
     def get_udp_format_config(udp_format: str) -> dict:
         """Get the UDP format configuration.
 
@@ -485,22 +480,6 @@ class WeightsFileReader(DadaFileReader):
         return UDP_FORMAT_CONFIG[udp_format]
 
     @property
-    def dropped_packets(self: WeightsFileReader) -> np.ndarray:
-        """Return a list of the dropped packets by inspecting NaNs in the scales."""
-        # flatten the 2D array
-        packet_scales = self.scales.flatten()
-
-        # convert the array of floats to boolean via isnan,
-        # then get the indices of the True values
-        dropped_packet_list = np.isnan(packet_scales).nonzero()[0]
-        msg = f"""
-        found {len(dropped_packet_list)} dropped packets via scale factor NaNs
-        """
-        self.logger.info(msg)
-
-        return dropped_packet_list + self.packet_offset
-
-    @property
     def packet_offset(self: WeightsFileReader) -> int:
         """Get the package offset for current file.
 
@@ -516,3 +495,23 @@ class WeightsFileReader(DadaFileReader):
                """
         assert self.obs_offset % self.weights_packet_stride == 0, msg
         return self.obs_offset // self.weights_packet_stride
+
+    @property
+    def nbit(self: WeightsFileReader) -> int:
+        """Get the number of bits the data is encoded in."""
+        return int(self._header["NBIT"])
+
+    @property
+    def nsamp_per_weight(self: WeightsFileReader) -> int:
+        """Get the number of samples the weights are used for."""
+        return int(self._header["NSAMP_PER_WEIGHT"])
+
+    @property
+    def packet_weights_size(self: WeightsFileReader) -> int:
+        """Get the packet weights size."""
+        return int(self._header["PACKET_WEIGHTS_SIZE"])
+
+    @property
+    def packet_scales_size(self: WeightsFileReader) -> int:
+        """Get the packet scales size."""
+        return int(self._header["PACKET_SCALES_SIZE"])

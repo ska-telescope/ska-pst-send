@@ -72,14 +72,14 @@ class PstFiles:
     :ivar path:
     :vartype path: str
     :ivar size:
-    :vartype size: str
+    :vartype size: int
     :ivar status:
     :vartype status: str
     """
 
     description: str = field(default="")
     path: str = field(default="")
-    size: str = field(default="")
+    size: int = field(default=0)
     status: str = field(default="done")
 
 
@@ -101,45 +101,45 @@ class PstObsCore:
                        or heavily processed survey fields
                        4 = Analysis data products generated after some scientific data manipulation or
                        interpretation.
-    :vartype calib_level: str
+    :vartype calib_level: int
     :ivar obs_id: scan id
     :vartype obs_id: str
     :ivar access_estsize: value derived from the recorded data files upon stop_scan()
-    :vartype access_estsize: str
+    :vartype access_estsize: int
     :ivar target_name: Astronomical object observed
     :vartype target_name: str
     :ivar s_ra: Centre of observation right ascension, ICRS
-    :vartype s_ra: str
+    :vartype s_ra: float
     :ivar s_dec: Centre of observation declination, ICRS
-    :vartype s_dec: str
+    :vartype s_dec: float
     :ivar t_min: Start time in MJD
     :vartype t_min: str
     :ivar t_max: Stop time in MJD
     :vartype t_max: str
     :ivar t_resolution: Temporal resolution FWHM (full width at half maximum)
-    :vartype t_resolution: str
+    :vartype t_resolution: float
     :ivar t_exptime: Total exposure time.
-    :vartype t_exptime: str
+    :vartype t_exptime: float
     :ivar facility_name: The observatory or facility used to collect the data
     :vartype facility_name: str
     :ivar instrument_name: The name of the instrument used for the acquisition of the observation
     :vartype instrument_name: str
     :ivar pol_xel: Number of polarization samples
-    :vartype pol_xel: str
+    :vartype pol_xel: int
     :ivar pol_states: List of polarization states
     :vartype pol_states: str
     :ivar em_xel: Number of elements along the spectral axis
-    :vartype em_xel: str
+    :vartype em_xel: int
     :ivar em_unit: Spectral coordinates unit type. Defaults to Hz.
     :vartype em_unit: str
     :ivar em_min: Start in spectral coordinates (vacuum wavelength)
-    :vartype em_min: str
+    :vartype em_min: float
     :ivar em_max: Stop in spectral coordinates (vacuum wavelength)
-    :vartype em_max: str
+    :vartype em_max: float
     :ivar em_res_power: Spectral resolving power
     :vartype em_res_power: str
     :ivar em_resolution: Spectral resolution
-    :vartype em_resolution: str
+    :vartype em_resolution: float
     :ivar o_ucd: Unified Content Descriptor of observable e.g. phot.count or phot.flux.density
                  see section 4.18 and B.6.4.1 in Obscore standard,
                  UCD1+ controlled vocabulary and especially list of observables),
@@ -149,26 +149,26 @@ class PstObsCore:
 
     dataproduct_type: str = field(default="timeseries")
     dataproduct_subtype: str = field(default="voltages")
-    calib_level: str = field(default="0")
+    calib_level: int = field(default=0)
     obs_id: str = field(default="")
-    access_estsize: str = field(default="")
+    access_estsize: int = field(default=0)
     target_name: str = field(default="")
-    s_ra: str = field(default="")
-    s_dec: str = field(default="")
+    s_ra: float = field(default=0.0)
+    s_dec: float = field(default=0.0)
     t_min: str = field(default="")
     t_max: str = field(default="")
-    t_resolution: str = field(default="")
-    t_exptime: str = field(default="")
+    t_resolution: float = field(default=0.0)
+    t_exptime: float = field(default=0.0)
     facility_name: str = field(default="SKA-Observatory")
     instrument_name: str = field(default="")
-    pol_xel: str = field(default="")
+    pol_xel: int = field(default=0)
     pol_states: str = field(default="")
-    em_xel: str = field(default="")
+    em_xel: int = field(default=0)
     em_unit: str = field(default="Hz")
-    em_min: str = field(default="")
-    em_max: str = field(default="")
+    em_min: float = field(default=0.0)
+    em_max: float = field(default=0.0)
     em_res_power: str = field(default="")
-    em_resolution: str = field(default="")
+    em_resolution: float = field(default=0.0)
     o_ucd: str = field(default="null")
 
 

@@ -8,14 +8,21 @@
 """This module contains the pytest tests for the ScanManager."""
 from __future__ import annotations
 
+import subprocess
 import threading
 import time
+from typing import Any, Tuple
+from unittest.mock import MagicMock
+
+import pytest
 
 from ska_pst_send import SdpTransfer, VoltageRecorderScan
 
 
 def test_sdp_transfer_process(
-    local_remote_scans: (VoltageRecorderScan, VoltageRecorderScan), subsystem_id: str
+    local_remote_scans: Tuple[VoltageRecorderScan, VoltageRecorderScan],
+    subsystem_id: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test the process method of SdpTransfer."""
     (local_scan, remote_scan) = local_remote_scans
@@ -25,6 +32,18 @@ def test_sdp_transfer_process(
     data_product_dasboard = "disabled"
     verbose = False
     sdp_transfer = SdpTransfer(local_path, remote_path, subsystem_id, data_product_dasboard, verbose)
+
+    def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+        # ensure the file is created
+        for sf in local_scan._stats_files:
+            (local_scan.full_scan_path / sf.data_product_path).touch()
+
+        completed = MagicMock()
+        completed.returncode = 0
+        return completed
+
+    mocked_cmd = MagicMock(side_effect=_process_side_effect)
+    monkeypatch.setattr(subprocess, "run", mocked_cmd)
 
     local_scan._scan_completed_file.touch()
     local_scan._data_product_file.touch()

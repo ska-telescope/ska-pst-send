@@ -44,7 +44,7 @@ class VoltageRecorderScan(Scan):
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
 
-    def update_files(self: Scan) -> None:
+    def update_files(self: VoltageRecorderScan) -> None:
         """Check the file system for new data, weights and stats files."""
         self._data_files = [
             VoltageRecorderFile(data_file, self.data_product_path)
@@ -67,7 +67,7 @@ class VoltageRecorderScan(Scan):
         if self.scan_config_file_exists:
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
 
-    def generate_data_product_file(self: Scan) -> bool:
+    def generate_data_product_file(self: VoltageRecorderScan) -> bool:
         """
         Generate the ska-data-product.yaml file.
 
@@ -84,25 +84,22 @@ class VoltageRecorderScan(Scan):
             self.logger.warning("Cannot generate data product file as unprocessed files exist")
             return False
 
-        data_product_file = self.full_scan_path / "ska-data-product.yaml"
-        self.logger.debug(f"Generating data_product_file: {data_product_file}")
-
-        metadata_builder = MetaDataBuilder()
-        metadata_builder.dsp_mount_path = self.full_scan_path
-        metadata_builder.dada_file_manager = DadaFileManager(metadata_builder.dsp_mount_path)
+        metadata_builder = MetaDataBuilder(dsp_mount_path=self.full_scan_path)
+        metadata_builder.dada_file_manager = DadaFileManager(folder=metadata_builder.dsp_mount_path)
         metadata_builder.build_metadata()
-        metadata_builder.write_metadata(filename=str(data_product_file))
+        # this call will write to file self.full_scan_path / "ska-data-product.yaml"
+        metadata_builder.write_metadata()
         return True
 
     @property
     def next_unprocessed_file(
-        self: Scan,
-    ) -> Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile):
+        self: VoltageRecorderScan,
+    ) -> Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] | None:
         """
         Return a data and weights file that have not yet been processed into a stat file.
 
         :return: tuple of voltage recorder files to be processed
-        :rtype: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile)
+        :rtype: Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile]
         """
         self.update_files()
         for data_file in self._data_files:
@@ -115,17 +112,17 @@ class VoltageRecorderScan(Scan):
                     self._weights_files[file_number],
                     VoltageRecorderFile(stat_file_path, self.data_product_path),
                 )
-        return (None, None, None)
+        return None
 
     def process_file(
-        self: Scan,
-        unprocessed_file: Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile),
+        self: VoltageRecorderScan,
+        unprocessed_file: Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile],
         dir_perms: int = 0o777,
     ) -> bool:
         """
         Process the data and weights file to generate a stat file.
 
-        :param Tuple(VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile) unprocessed_file
+        :param Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] unprocessed_file
         unprocessed file
         :param int dir_perms: octal directory permissions to use on directory creation
         :return: flag indicating proessing was successful
@@ -143,7 +140,6 @@ class VoltageRecorderScan(Scan):
             "-w",
             str(weights_file),
         ]
-        command = ["touch", str(stats_file.file_name)]
 
         # improve subprocess check UDP gen in testutils
         self.logger.info(f"running command: {command}")
@@ -157,10 +153,10 @@ class VoltageRecorderScan(Scan):
 
         ok = completed.returncode == 0
         if not ok:
-            self.logger.warning(f"command {command} failed: {completed}")
+            self.logger.warning(f"command {command} failed: {completed.returncode}")
         return ok
 
-    def get_all_files(self: Scan) -> List[VoltageRecorderFile]:
+    def get_all_files(self: VoltageRecorderScan) -> List[VoltageRecorderFile]:
         """
         Return a list of all data, weights, stats and control files.
 

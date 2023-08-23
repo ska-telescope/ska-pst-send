@@ -35,7 +35,7 @@ def test_scan_paths(three_local_scans: List[VoltageRecorderScan], subsystem_id: 
         assert scan.relative_scan_path in relative_scan_paths
 
 
-def test_oldest_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id: str):
+def test_oldest_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id: str) -> None:
     """Test that ScanManager oldest_scan method."""
     scan_list = three_local_scans
     data_product_path = scan_list[0].data_product_path
@@ -44,13 +44,14 @@ def test_oldest_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
     oldest = scan_manager.oldest_scan
 
     # for now, rely on the scan_manager to order the _scans attribute correctly
+    assert oldest is not None, "Expected oldest scan to not be None"
     assert oldest.relative_scan_path == scan_manager._scans[0].relative_scan_path
     assert oldest.data_product_path == scan_manager._scans[0].data_product_path
     assert oldest.full_scan_path == scan_manager._scans[0].full_scan_path
     assert oldest.get_all_files == scan_manager._scans[0].get_all_files
 
 
-def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id: str):
+def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id: str) -> None:
     """Test the ScanManager detects scans that have been processed and deleted."""
     scan_list = three_local_scans
     data_product_path = scan_list[0].data_product_path
@@ -70,6 +71,7 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
         assert len(scan_manager._scans) == len(scan_list) - (i + 1)
 
         if (i + 1) < len(scan_list):
+            assert oldest is not None, "Expected oldest scan to not be None"
             assert oldest.relative_scan_path == scan_manager._scans[0].relative_scan_path
             assert oldest.data_product_path == scan_manager._scans[0].data_product_path
             assert oldest.full_scan_path == scan_manager._scans[0].full_scan_path

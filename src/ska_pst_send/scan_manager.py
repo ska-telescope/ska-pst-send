@@ -41,7 +41,7 @@ class ScanManager:
 
         self.data_product_path = data_product_path
         self.subsystem = subsystem
-        self._scans = []
+        self._scans: List[VoltageRecorderScan] = []
         self.logger = logger or logging.getLogger(__name__)
 
         # initialise the list of scans

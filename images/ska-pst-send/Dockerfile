@@ -31,6 +31,8 @@ COPY images/ska-pst-send/pip.conf /etc/pip.conf
 ARG DEPENDENCIES_PATH=dependencies
 ARG PKG_CLI_PAYLOAD=${DEPENDENCIES_PATH}/runtime.apt.txt
 
+ENV PST_DSP_MOUNT=""
+
 COPY ${PKG_CLI_PAYLOAD} ${PKG_CLI_PAYLOAD}
 RUN stat ${PKG_CLI_PAYLOAD} \
     && apt-get update -y \

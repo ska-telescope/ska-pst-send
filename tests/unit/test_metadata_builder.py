@@ -8,6 +8,7 @@
 """Tests for the MetaDataBuilder class."""
 
 import os
+import pathlib
 
 import yaml
 
@@ -15,7 +16,7 @@ from ska_pst_send.metadata import PstConfig, PstContext, PstFiles, PstMetaData, 
 from ska_pst_send.metadata_builder import MetaDataBuilder
 
 
-def test_metadata_schema():
+def test_metadata_schema() -> None:
     """Test the property is of the correct object type."""
     pst_mdb = MetaDataBuilder()
     assert type(pst_mdb.pst_metadata) is PstMetaData
@@ -35,13 +36,13 @@ pst_files = [
     PstFiles(
         description="Channelised voltage data raw files",
         path="data",
-        size="343326720",
+        size=343326720,
         status="done",
     ),
     PstFiles(
         description="Channelised voltage weights raw files",
         path="weights",
-        size="2954496",
+        size=2954496,
         status="done",
     ),
 ]
@@ -49,7 +50,7 @@ pst_obscore = PstObsCore(
     dataproduct_type="timeseries",
     dataproduct_subtype="voltages",
     calib_level=0,
-    obs_id=485,
+    obs_id="485",
     access_estsize=343277568,
     target_name="J1921+2153",
     s_ra=19.362448611111116,
@@ -72,10 +73,11 @@ pst_obscore = PstObsCore(
 )
 
 
-def test_write_metadata():
+def test_write_metadata(send_tempdir: pathlib.Path) -> None:
     """Test writing metadata dictionary into yaml file."""
-    pst_mdb = MetaDataBuilder()
-    pst_mdb.dsp_mount_path = "/tmp"
+    pst_mdb = MetaDataBuilder(dsp_mount_path=send_tempdir)
+
+    assert pst_mdb.dsp_mount_path == send_tempdir, f"Expected {pst_mdb.dsp_mount_path} to be {send_tempdir}"
 
     pst_mdb.pst_metadata.interface = "http://schema.skao.int/ska-data-product-meta/0.1"
     pst_mdb.pst_metadata.execution_block = "eb-19700101-485"

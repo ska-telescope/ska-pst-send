@@ -1,4 +1,7 @@
 ARG SEND_BASE_IMAGE=""
+ARG STAT_RUNTIME_IMAGE=""
+
+FROM $STAT_RUNTIME_IMAGE as stat-runtime
 
 FROM $SEND_BASE_IMAGE
 
@@ -12,19 +15,31 @@ LABEL \
     org.skatelescope.version="0.0.0" \
     int.skao.application="ska-pst-send Builder"
 
-# COPY repository to container filesystem
-COPY . /mnt/ska-pst-send
-WORKDIR /mnt/ska-pst-send
-RUN mv pip.conf /etc/
-RUN apt-get update -y && apt-get install -y make
+WORKDIR /app
+
+COPY images/ska-pst-send-builder/pip.conf /etc/pip.conf
 
 # Install common apt dependencies
 ARG DEPENDENCIES_PATH=dependencies
 ARG PKG_CLI_PAYLOAD=${DEPENDENCIES_PATH}/base.apt.txt
-ARG PKG_CLI_CMD=apt-get
-ARG PKG_CLI_PARAMETERS='install --no-install-recommends -y'
+
+COPY ${PKG_CLI_PAYLOAD} ${PKG_CLI_PAYLOAD}
 RUN stat ${PKG_CLI_PAYLOAD} \
-    && PKG_CLI_PAYLOAD=${PKG_CLI_PAYLOAD} PKG_CLI_PARAMETERS=${PKG_CLI_PARAMETERS} make local-pkg-install
+    && apt-get update -y \
+    && apt-get install --no-install-recommends -y $(cat ${PKG_CLI_PAYLOAD}) \
+    && apt-get autoremove --yes \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f ${PKG_CLI_PAYLOAD}
+
+# Copy over STAT libraries
+WORKDIR /usr/local
+COPY --from=stat-runtime /usr/local/bin/ska_pst_stat* ./bin/
+COPY --from=stat-runtime /usr/local/lib/libska_pst*.so ./lib/
+
+RUN ska_pst_stat_file_proc -h \
+    && ska_pst_stat_info -h
+
+WORKDIR /app
 
 # Install poetry as a binary
 ENV POETRY_HOME=/opt/poetry
@@ -32,14 +47,19 @@ ARG POETRY_VERSION="1.2.2"
 
 # Intermittent sSL connection error encountered
 # RUN curl -sSL https://install.python-poetry.org | python3 - --yes
-RUN python3 install-poetry.py
+COPY install-poetry.py .
+RUN python3 install-poetry.py --version ${POETRY_VERSION} \
+    && ln -sfn /usr/bin/python3 /usr/bin/python \
+    && ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry 
 
-RUN ln -sfn /usr/bin/python3 /usr/bin/python && \
-    ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry && \
-    poetry env use python3
+COPY src/ /app/src/
+COPY tests/ /app/tests/
+COPY pyproject.toml poetry.lock* /app/
 
-# Install python dependencies through poetry
-RUN poetry install && \
-    poetry run bash -c 'make python-test'
+RUN poetry config virtualenvs.create false \
+    && poetry install --with dev \
+    && PYTHONPATH="/app/src" pytest tests
+
+RUN sdp_transfer -h
 
 CMD [ "bash" ]

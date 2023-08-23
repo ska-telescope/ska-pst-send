@@ -7,9 +7,13 @@
 
 """This module contains the pytest tests for the scan process thread."""
 
+import subprocess
 import threading
 import time
-from typing import List
+from typing import Any, List
+from unittest.mock import MagicMock
+
+import pytest
 
 from ska_pst_send import ScanProcess, VoltageRecorderFile, VoltageRecorderScan
 
@@ -18,7 +22,7 @@ def test_constructor(voltage_recording_scan: VoltageRecorderScan, scan_files: Li
     """Test the ScanProcess constructor initialises the object as required."""
     scan = voltage_recording_scan
 
-    cond = threading.Condition
+    cond = threading.Condition()
     scan_process = ScanProcess(scan, cond)
     assert scan_process.completed is False
     assert scan_process.is_alive() is False
@@ -31,10 +35,23 @@ def test_process(
     weights_files: List[str],
     stats_files: List[str],
     scan_files: List[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test the ScanProcess can fully process a completed scan."""
     scan = voltage_recording_scan
     assert len(scan.get_all_files()) == len(scan_files) + 1
+
+    def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+        # ensure the file is created
+        for sf in stats_files:
+            (scan.full_scan_path / sf).touch()
+
+        completed = MagicMock()
+        completed.returncode = 0
+        return completed
+
+    mocked_cmd = MagicMock(side_effect=_process_side_effect)
+    monkeypatch.setattr(subprocess, "run", mocked_cmd)
 
     cond = threading.Condition()
     scan_process = ScanProcess(scan, cond, loop_wait=0.1)
@@ -55,7 +72,7 @@ def test_process(
     time.sleep(0.5)
 
     # assert there are no more unprocessed files
-    assert scan.next_unprocessed_file == (None, None, None)
+    assert scan.next_unprocessed_file is None
 
     # assert that the scan is still incomplete since the data_product file and scan_completed
     # file do not yet exist
@@ -79,10 +96,22 @@ def test_process(
         assert stat_file_path.exists()
 
 
-def test_aborted_transfer(voltage_recording_scan: VoltageRecorderScan) -> None:
+def test_aborted_transfer(
+    voltage_recording_scan: VoltageRecorderScan,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Test that the ScanProcess thread can be aborted via the threading.Condition variable."""
     scan = voltage_recording_scan
     cond = threading.Condition()
+
+    def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+        # ensure the file is created
+        completed = MagicMock()
+        completed.returncode = 0
+        return completed
+
+    mocked_cmd = MagicMock(side_effect=_process_side_effect)
+    monkeypatch.setattr(subprocess, "run", mocked_cmd)
 
     scan_process = ScanProcess(scan, cond, loop_wait=0.1)
     scan_process.start()

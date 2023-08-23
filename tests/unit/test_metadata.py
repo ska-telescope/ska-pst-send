@@ -9,7 +9,7 @@
 from ska_pst_send.metadata import PstConfig, PstContext, PstMetaData, PstObsCore
 
 
-def test_metadata_field_objects():
+def test_metadata_field_objects() -> None:
     """Test the property is of the correct object type."""
     pst_md = PstMetaData()
     assert type(pst_md.config) is PstConfig

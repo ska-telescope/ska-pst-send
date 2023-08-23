@@ -10,6 +10,7 @@ astropy = "^5.3.1"
 pyyaml = "^6.0.1"
 ska-ser-logging = "^0.4.1+0a677a67"
 requests = "^2.31.0"
+nptyping = "^2.5.0"
 
 [tool.poetry.group.dev.dependencies]
 autoflake = "^1.4"
@@ -22,12 +23,12 @@ flake8-formatter-junit-xml = "^0.0.6"
 flake8-rst-docstrings = "^0.2.5"
 isort = "^5.12.0"
 mypy = "^1.4.1"
-nptyping = "^2.5.0"
 pylint = "^2.8.3"
 pylint-junit = "^0.3.2"
 pytest = "^6.2.0"
 pytest-pylint = "^0.18.0"
 pytest-cov = "^3.0.0"
+types-pyyaml = "^6.0.12.11"
 
 [[tool.poetry.source]]
 name = 'ska-nexus'

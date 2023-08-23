@@ -7,3 +7,4 @@ zlib1g-dev
 ca-certificates
 curl
 git
+libhdf5-dev

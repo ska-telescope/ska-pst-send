@@ -12,6 +12,7 @@ import logging
 import pathlib
 import threading
 from signal import SIGINT, SIGTERM, signal
+from types import FrameType
 
 from ska_ser_logging import configure_logging
 
@@ -47,6 +48,8 @@ class SdpTransfer:
         self.remote_path = remote_path
         self.ska_subsystem = ska_subsystem
         self.data_product_dashboard = data_product_dashboard
+        if self.data_product_dashboard != "disabled":
+            self._dpd_api_client = DpdApiClient(endpoint=self.data_product_dashboard)
 
         logging_level = logging.DEBUG if verbose else logging.INFO
         configure_logging(level=logging_level)
@@ -77,15 +80,15 @@ class SdpTransfer:
 
                 # construct a remote scan object for comparison
                 remote_scan = VoltageRecorderScan(
-                    self.remote_path, local_scan.relative_scan_path, self.logger
+                    self.remote_path, local_scan.relative_scan_path, logger=self.logger
                 )
 
                 # perform post-processing on the scan to generate output files for transfer
-                scan_process = ScanProcess(local_scan, self._cond, self.logger)
+                scan_process = ScanProcess(local_scan, self._cond, logger=self.logger)
                 scan_process.start()
 
                 # perform the file transfer of output files to the remote storage
-                scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, self.logger)
+                scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, logger=self.logger)
                 scan_transfer.start()
 
                 self.logger.info(f"Processing {local_scan.relative_scan_path}")
@@ -106,14 +109,24 @@ class SdpTransfer:
                         self.logger.debug(
                             f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}"
                         )
-                        dpd_api_client = DpdApiClient(endpoint=self.data_product_dashboard)
-                        dpd_api_client.reindex_dataproducts()
+                        self._dpd_api_client.reindex_dataproducts()
 
-                        if pathlib.Path.exists(f"{self.remote_path}/ska-data-product.yaml"):
-                            search_value = f"{self.remote_path}/ska-data-product.yaml"
-                            search_value.replace("/mnt/sdp/product", "")
-                            dpd_api_client.search_metadata(search_value=search_value)
-                            local_scan.delete_scan()
+                        if remote_scan._data_product_file.exists():
+                            trim_path = str(self.remote_path / "product")
+                            search_value = str(remote_scan.data_product_file)
+                            search_value.replace(trim_path, "")
+                            if self._dpd_api_client.metadata_exists(search_value=search_value):
+                                self.logger.info(
+                                    f"Metadata found in API call self._dpd_api_client.metadata_exists={self._dpd_api_client.metadata_exists()}"
+                                )
+                                local_scan.delete_scan()
+                            else:
+                                self.logger.error(
+                                    f"Metadata not found in API call self._dpd_api_client.metadata_exists={self._dpd_api_client.metadata_exists()}"
+                                )
+                                self.logger.error(
+                                    f"self._dpd_api_client.get_metadata()={self._dpd_api_client.get_metadata()}"
+                                )
                         else:
                             self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
 
@@ -156,7 +169,7 @@ def main() -> None:
     sdp_transfer = SdpTransfer(**args)
 
     # handle SIGINT gracefully to prevent partially transferred files
-    def signal_handler(sig, frame):
+    def signal_handler(signal: int, frame: FrameType | None) -> None:
         sys.stderr.write("CTRL + C pressed\n")
         sdp_transfer.interrrupt_processing()
 

@@ -33,9 +33,9 @@ class VoltageRecorderScan(Scan):
     ) -> None:
         """Initialise a Voltage Recorder Scan object.
 
-        :param pathlib.Path data_product_path: base path to the `product` directory
-        :param pathlib.Path relative_scan_path: path of the scan relative to the data_product_path
-        :param logging.Logger logger: python logging instance
+        :param data_product_path: base path to the `product` directory
+        :param relative_scan_path: path of the scan relative to the data_product_path
+        :param logger: python logging instance
         """
         Scan.__init__(self, data_product_path, relative_scan_path, logger)
 
@@ -81,9 +81,10 @@ class VoltageRecorderScan(Scan):
             return False
 
         # ensure there are no unprocessed data files
-        if self.next_unprocessed_file(0) is not None:
+        unprocessed_file = self.next_unprocessed_file(minimum_age=0)
+        if unprocessed_file is not None:
             self.logger.warning(
-                f"Cannot generate data product file, unprocessed files exist: {self.next_unprocessed_file(0)}"
+                f"Cannot generate data product file, unprocessed files exist: {unprocessed_file}"
             )
             return False
 
@@ -96,12 +97,12 @@ class VoltageRecorderScan(Scan):
 
     def next_unprocessed_file(
         self: VoltageRecorderScan,
-        minimum_age: int = 10,
+        minimum_age: float = 10,
     ) -> Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] | None:
         """
         Return a data and weights file that have not yet been processed into a stat file.
 
-        :param int minimum_age: minimum allowed age, the number of seconds since last modification
+        :param minimum_age: minimum allowed age, the number of seconds since last modification
         :return: tuple of voltage recorder files to be processed
         :rtype: Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile]
         """
@@ -117,24 +118,24 @@ class VoltageRecorderScan(Scan):
                 )
                 continue
 
-            stat_file_path = self.full_scan_path / "stat" / f"{data_file.file_name.stem}.h5"
+            # the stat file that should exist
+            stat_file = VoltageRecorderFile(
+                self.full_scan_path / "stat" / f"{data_file.file_name.stem}.h5", self.data_product_path
+            )
 
-            # For a data/weights file pair to be processable it must:
-            #   not already have an existing stat file
-            #   not be unprocessable, a previous attempt to process it failed
-            #   be 10 seconds old, i.e. not have a modification time less than 10s ago
-            if (
-                not stat_file_path.exists()
-                and stat_file_path not in self._unprocessable_files
-                and data_file.age >= minimum_age
-                and weights_file.age >= minimum_age
-            ):
+            # if the stat file already exists, then no need to generate
+            if stat_file.exists:
+                continue
+
+            # stat file cannot be generated due to a previous processing failure
+            if stat_file.file_name in self._unprocessable_files:
+                self.logger.debug(f"skipping {stat_file.relative_path} as is unprocessable")
+                continue
+
+            # input data and weights files must be at least minimum age
+            if min(data_file.age, weights_file.age) >= minimum_age:
                 self.logger.debug(f"data_file={data_file} weights_file={weights_file}")
-                return (
-                    data_file,
-                    weights_file,
-                    VoltageRecorderFile(stat_file_path, self.data_product_path),
-                )
+                return (data_file, weights_file, stat_file)
         return None
 
     def process_file(
@@ -147,7 +148,7 @@ class VoltageRecorderScan(Scan):
 
         :param Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] unprocessed_file
         unprocessed file
-        :param int dir_perms: octal directory permissions to use on directory creation
+        :param dir_perms: octal directory permissions to use on directory creation
         :return: flag indicating proessing was successful
         :rtype: bool
         """

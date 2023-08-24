@@ -8,8 +8,9 @@
 """Module class for data, weights and stats files of the PST Voltage Recorder."""
 from __future__ import annotations
 
+import os
 import pathlib
-from datetime import datetime
+import time
 
 _all__ = [
     "VoltageRecorderFile",
@@ -23,8 +24,8 @@ class VoltageRecorderFile:
         """
         Initialise the VoltageRecorderFile object.
 
-        :param pathlib.Path file_name: absolute path name of the file
-        :param pathlib.Path data_product_path: absolute path of the data product directory
+        :param file_name: absolute path name of the file
+        :param data_product_path: absolute path of the data product directory
         """
         self.file_name = file_name
         self.data_product_path = data_product_path
@@ -80,7 +81,7 @@ class VoltageRecorderFile:
         return self.file_number < other.file_number
 
     @property
-    def age(self: VoltageRecorderFile) -> int:
+    def age(self: VoltageRecorderFile) -> float:
         """
         Return the number of seconds since the file was last modified, or -1 if the file does not exist.
 
@@ -89,10 +90,7 @@ class VoltageRecorderFile:
         """
         if not self.exists:
             return -1
-        modification_time = pathlib.Path(self.file_name).stat().st_mtime
-        modified = datetime.fromtimestamp(modification_time)
-        now = datetime.utcnow()
-        return int((now - modified).seconds)
+        return time.time() - os.path.getmtime(self.file_name)
 
     @property
     def exists(self: VoltageRecorderFile) -> bool:

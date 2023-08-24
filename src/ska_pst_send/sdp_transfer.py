@@ -37,12 +37,12 @@ class SdpTransfer:
         """
         Initialise an SdpTransfer object.
 
-        :param pathlib.Path local_path: absolute path to the local (PST) data product directory
-        :param pathlib.Path remote_path: absolute path to the remote (SDP) data product directory
-        :param str subsystem: The PST instance, one of pst-low or pst-mid
-        :param str data_product_dashboard: The URI for connection to the SDP Data Product Dashboard API.
-        :param logging.Logger logger: The logger instance to use.
-        :param bool verbose: Verbosity flag for logging, if true use logging.DEBUG
+        :param local_path: absolute path to the local (PST) data product directory
+        :param remote_path: absolute path to the remote (SDP) data product directory
+        :param subsystem: the PST instance, one of pst-low or pst-mid
+        :param data_product_dashboard: the URI for connection to the SDP Data Product Dashboard API.
+        :param logger: the logger instance to use.
+        :param verbose: verbosity flag for logging, if true use logging.DEBUG
         """
         self.local_path = local_path
         self.remote_path = remote_path

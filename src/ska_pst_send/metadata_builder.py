@@ -125,7 +125,7 @@ class MetaDataBuilder:
         self: MetaDataBuilder,
         utc_datetime: str,
         datetime_format: str = "%Y-%m-%d-%H:%M:%S",
-    ) -> str:
+    ) -> float:
         """Convert datetime UTC format to MJD."""
         date_object = datetime.strptime(utc_datetime, datetime_format)
 
@@ -139,7 +139,7 @@ class MetaDataBuilder:
         # Round to the desired accuracy
         rounded_mjd = round(mjd, 10)
 
-        return str(Decimal(rounded_mjd))
+        return float(Decimal(rounded_mjd))
 
     def build_obscore(self: MetaDataBuilder) -> None:
         """Build PstObsCore used for obscore block in metadata file."""

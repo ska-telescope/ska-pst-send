@@ -28,17 +28,17 @@ class ScanProcess(threading.Thread):
         scan: VoltageRecorderScan,
         exit_cond: threading.Condition,
         loop_wait: float = 2,
-        minimum_age: int = 10,
+        minimum_age: float = 10,
         logger: logging.Logger | None = None,
     ) -> None:
         """
         Initialise the ScanProcess object.
 
-        :param VoltageRecorderScan scan: voltage recorder scan to be processed by the run method.
-        :param threading.Condition exit_cond: condition variable to use to trigger thread termination.
-        :param logging.Logger logger: The logger instance to use.
-        :param int loop_wait: timeout for the main processing loop.
-        :param int minimum_age: minimum age to require for unprocessed files, in seconds.
+        :param scan: voltage recorder scan to be processed by the run method.
+        :param exit_cond: condition variable to use to trigger thread termination.
+        :param loop_wait: timeout for the main processing loop.
+        :param minimum_age: minimum age to require for unprocessed files, in seconds.
+        :param logger: the logger instance to use.
         """
         threading.Thread.__init__(self, daemon=True)
 

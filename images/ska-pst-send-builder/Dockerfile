@@ -50,7 +50,7 @@ ARG POETRY_VERSION="1.2.2"
 COPY install-poetry.py .
 RUN python3 install-poetry.py --version ${POETRY_VERSION} \
     && ln -sfn /usr/bin/python3 /usr/bin/python \
-    && ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry 
+    && ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry
 
 COPY src/ /app/src/
 COPY tests/ /app/tests/

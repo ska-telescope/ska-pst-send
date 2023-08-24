@@ -31,19 +31,19 @@ class ScanTransfer(threading.Thread):
         exit_cond: threading.Condition,
         loop_wait: float = 2,
         dir_perms: int = 0o777,
-        minimum_age: int = 10,
+        minimum_age: float = 10,
         logger: logging.Logger | None = None,
     ) -> None:
         """
         Initialise the ScanTransfer object.
 
-        :param VoltageRecorderScan local_scan: scan to be transferred to the remote.
-        :param VoltageRecorderScan remote_scan: scan to which the local scan will be transferred.
-        :param threading.Condition exit_cond: condition variable to use to trigger thread termination.
-        :param logging.Logger logger: The logger instance to use.
-        :param int loop_wait: timeout for the main processing loop.
-        :param int dir_perms: octal permissions to apply when creating directories during transfer.
-        :param int minimum_age: minimum age to require for untransferred files, in seconds.
+        :param local_scan: scan to be transferred to the remote.
+        :param remote_scan: scan to which the local scan will be transferred.
+        :param exit_cond: condition variable to use to trigger thread termination.
+        :param loop_wait: timeout for the main processing loop.
+        :param dir_perms: octal permissions to apply when creating directories during transfer.
+        :param minimum_age: minimum age to require for untransferred files, in seconds.
+        :param logger: the logger instance to use.
         """
         threading.Thread.__init__(self, daemon=True)
 
@@ -51,17 +51,17 @@ class ScanTransfer(threading.Thread):
         self.remote_scan = remote_scan
         self.exit_cond = exit_cond
         self.logger = logger or logging.getLogger(__name__)
-        self.completed = False
         self.loop_wait = loop_wait
         self.default_dir_perms = dir_perms
         self.minimum_age = minimum_age
+        self.completed = False
         self.logger.debug(f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}")
 
-    def untransferred_files(self: ScanTransfer, minimum_age: int) -> List[VoltageRecorderFile]:
+    def untransferred_files(self: ScanTransfer, minimum_age: float) -> List[VoltageRecorderFile]:
         """
         Return the list of untransferred files for the scan.
 
-        :param int minimum_age: minimum file age to limit
+        :param minimum_age: minimum file age to use when returning untransferred files
         :return: the list of voltage recorder files
         :rtype: List[VoltageRecorderFile].
         """
@@ -104,7 +104,7 @@ class ScanTransfer(threading.Thread):
 
             # check if the scan is completed and the ScanProcess has generated the data-product-file
             self.completed = (
-                len(self.untransferred_files(0)) == 0
+                len(self.untransferred_files(minimum_age=0)) == 0
                 and self.local_scan.is_complete
                 and self.local_scan.data_product_file_exists
             )

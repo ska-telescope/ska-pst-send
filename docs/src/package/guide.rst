@@ -2,46 +2,24 @@
 .. _package-guide:
 
 .. todo::
-    - Insert todo's here
+    - Todo
 
-*******************************
-SKA-PST-PROTOSEND documentation
-*******************************
+**************************
+SKA-PST-SEND documentation
+**************************
 
 This section describes requirements and guidelines.
 
-Subtitle
-========
+===
+API
+===
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+.. toctree::
+  :caption: Subpackages
+  :maxdepth: 3
 
-.. Automatic API Documentation section. Generating the API from the docstrings. Modify / change the directory structure as you like
+  Metadata <metadata/index>
 
-Public API Documentation
-````````````````````````
-Functions
----------
+  Data Product Dashboard <data_product_dashboard/index>
 
-.. automodule:: ska_pst_send
-    :members:
-
-Classes
--------
-
-.. autoclass:: ska_pst_send.metadata.PstContext
-    :members:
-
-.. autoclass:: ska_pst_send.metadata.PstConfig
-    :members:
-
-.. autoclass:: ska_pst_send.metadata.PstFiles
-    :members:
-
-.. autoclass:: ska_pst_send.metadata.PstObsCore
-    :members:
-
-.. autoclass:: ska_pst_send.metadata.PstMetaData
-    :members:
-
-.. autoclass:: ska_pst_send.metadata_builder.MetaDataBuilder
-    :members:
+  SDP Transfer <sdp_transfer/index>

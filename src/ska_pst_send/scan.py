@@ -116,4 +116,4 @@ class Scan:
         :return: pathlib object concerning the metadata file
         :rtype pathlib.Path:
         """
-        return self.full_scan_path / "ska-data-product.yaml"
+        return self._data_product_file

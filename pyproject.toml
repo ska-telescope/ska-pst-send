@@ -9,6 +9,7 @@ python = "^3.10"
 astropy = "^5.3.1"
 pyyaml = "^6.0.1"
 ska-ser-logging = "^0.4.1+0a677a67"
+requests = "^2.31.0"
 nptyping = "^2.5.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -28,6 +29,8 @@ pytest = "^6.2.0"
 pytest-pylint = "^0.18.0"
 pytest-cov = "^3.0.0"
 types-pyyaml = "^6.0.12.11"
+types-requests = "^2.31.0.2"
+types-urllib3 = "^1.26.25.14"
 
 [[tool.poetry.source]]
 name = 'ska-nexus'

@@ -16,6 +16,7 @@ from types import FrameType
 
 from ska_ser_logging import configure_logging
 
+from .dpd_api_client import DpdApiClient
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
 from .scan_transfer import ScanTransfer
@@ -47,6 +48,8 @@ class SdpTransfer:
         self.remote_path = remote_path
         self.ska_subsystem = ska_subsystem
         self.data_product_dashboard = data_product_dashboard
+        if self.data_product_dashboard != "disabled":
+            self._dpd_api_client = DpdApiClient(endpoint=self.data_product_dashboard)
 
         logging_level = logging.DEBUG if verbose else logging.INFO
         configure_logging(level=logging_level)
@@ -103,8 +106,25 @@ class SdpTransfer:
                     if self.data_product_dashboard == "disabled":
                         local_scan.delete_scan()
                     else:
-                        # TODO notify the data product dashboard via the client API
-                        self.logger.warning("SDP Data Product Dashboard notification not yet implemented")
+                        self.logger.debug(
+                            f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}"
+                        )
+                        self._dpd_api_client.reindex_dataproducts()
+
+                        if remote_scan.data_product_file_exists:
+                            trim_path = str(self.remote_path / "product")
+                            search_value = str(remote_scan.data_product_file)
+                            search_value.replace(trim_path, "")
+                            if self._dpd_api_client.metadata_exists(search_value=search_value):
+                                self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
+                                local_scan.delete_scan()
+                            else:
+                                self.logger.error(
+                                    f"Metadata not found. Retaining {local_scan.full_scan_path}"
+                                )
+
+                        else:
+                            self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
 
             if self._persist:
                 with self._cond:
@@ -136,7 +156,7 @@ def main() -> None:
         "--data_product_dashboard",
         type=str,
         default="disabled",
-        help="endpoint for the SDP Data Product Dashboard REST API [e.g. http://127.0.0.1:8888/api]",
+        help="endpoint for the SDP Data Product Dashboard REST API [e.g. http://127.0.0.1:8888]",
     )
     p.add_argument("-v", "--verbose", action="store_true")
 

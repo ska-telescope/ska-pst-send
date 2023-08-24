@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import pathlib
+from datetime import datetime
 
 _all__ = [
     "VoltageRecorderFile",
@@ -77,6 +78,21 @@ class VoltageRecorderFile:
         :rtype: bool
         """
         return self.file_number < other.file_number
+
+    @property
+    def age(self: VoltageRecorderFile) -> int:
+        """
+        Return the number of seconds since the file was last modified, or -1 if the file does not exist.
+
+        :return: age of the file in seconds
+        :rtype: int
+        """
+        if not self.exists:
+            return -1
+        modification_time = pathlib.Path(self.file_name).stat().st_mtime
+        modified = datetime.fromtimestamp(modification_time)
+        now = datetime.utcnow()
+        return int((now - modified).seconds)
 
     @property
     def exists(self: VoltageRecorderFile) -> bool:

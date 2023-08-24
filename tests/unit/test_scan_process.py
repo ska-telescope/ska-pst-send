@@ -54,7 +54,7 @@ def test_process(
     monkeypatch.setattr(subprocess, "run", mocked_cmd)
 
     cond = threading.Condition()
-    scan_process = ScanProcess(scan, cond, loop_wait=0.1)
+    scan_process = ScanProcess(scan, cond, loop_wait=0.1, minimum_age=0)
 
     # Assert that there are unprocessed files
     expected = (
@@ -62,7 +62,7 @@ def test_process(
         VoltageRecorderFile(scan.full_scan_path / weights_files[0], scan.data_product_path),
         VoltageRecorderFile(scan.full_scan_path / stats_files[0], scan.data_product_path),
     )
-    assert scan.next_unprocessed_file == expected
+    assert scan.next_unprocessed_file(minimum_age=0) == expected
 
     # start the ScanProcess thread
     scan_process.start()
@@ -72,7 +72,7 @@ def test_process(
     time.sleep(0.5)
 
     # assert there are no more unprocessed files
-    assert scan.next_unprocessed_file is None
+    assert scan.next_unprocessed_file(minimum_age=0) is None
 
     # assert that the scan is still incomplete since the data_product file and scan_completed
     # file do not yet exist

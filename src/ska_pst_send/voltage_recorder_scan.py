@@ -43,6 +43,7 @@ class VoltageRecorderScan(Scan):
         self._weights_files: List[VoltageRecorderFile] = []
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
+        self._unprocessable_files: List[pathlib.Path] = []
 
     def update_files(self: VoltageRecorderScan) -> None:
         """Check the file system for new data, weights and stats files."""
@@ -58,7 +59,7 @@ class VoltageRecorderScan(Scan):
 
         self._stats_files = [
             VoltageRecorderFile(stats_file, self.data_product_path)
-            for stats_file in sorted(self.full_scan_path.glob("stats/*.h5"))
+            for stats_file in sorted(self.full_scan_path.glob("stat/*.h5"))
         ]
 
         self._config_files = []
@@ -80,8 +81,10 @@ class VoltageRecorderScan(Scan):
             return False
 
         # ensure there are no unprocessed data files
-        if self.next_unprocessed_file != (None, None, None):
-            self.logger.warning("Cannot generate data product file as unprocessed files exist")
+        if self.next_unprocessed_file(0) is not None:
+            self.logger.warning(
+                f"Cannot generate data product file, unprocessed files exist: {self.next_unprocessed_file(0)}"
+            )
             return False
 
         metadata_builder = MetaDataBuilder(dsp_mount_path=self.full_scan_path)
@@ -91,25 +94,45 @@ class VoltageRecorderScan(Scan):
         metadata_builder.write_metadata()
         return True
 
-    @property
     def next_unprocessed_file(
         self: VoltageRecorderScan,
+        minimum_age: int = 10,
     ) -> Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile] | None:
         """
         Return a data and weights file that have not yet been processed into a stat file.
 
+        :param int minimum_age: minimum allowed age, the number of seconds since last modification
         :return: tuple of voltage recorder files to be processed
         :rtype: Tuple[VoltageRecorderFile, VoltageRecorderFile, VoltageRecorderFile]
         """
         self.update_files()
-        for data_file in self._data_files:
-            stat_file_path = self.full_scan_path / "stats" / f"{data_file.file_name.stem}.h5"
-            if not stat_file_path.exists():
-                file_number = data_file.file_number
-                self.logger.debug(f"data_file={data_file} file_number={file_number}")
+
+        # combine the data and weights files into a enumerated tuple and iterate
+        for (data_file, weights_file) in zip(self._data_files, self._weights_files):
+
+            if data_file.file_number != weights_file.file_number:
+                self.logger.warning(
+                    f"File number mismatch data_file={data_file.file_number} "
+                    f"weights_file={weights_file.file_number}"
+                )
+                continue
+
+            stat_file_path = self.full_scan_path / "stat" / f"{data_file.file_name.stem}.h5"
+
+            # For a data/weights file pair to be processable it must:
+            #   not already have an existing stat file
+            #   not be unprocessable, a previous attempt to process it failed
+            #   be 10 seconds old, i.e. not have a modification time less than 10s ago
+            if (
+                not stat_file_path.exists()
+                and stat_file_path not in self._unprocessable_files
+                and data_file.age >= minimum_age
+                and weights_file.age >= minimum_age
+            ):
+                self.logger.debug(f"data_file={data_file} weights_file={weights_file}")
                 return (
-                    self._data_files[file_number],
-                    self._weights_files[file_number],
+                    data_file,
+                    weights_file,
                     VoltageRecorderFile(stat_file_path, self.data_product_path),
                 )
         return None
@@ -136,13 +159,15 @@ class VoltageRecorderScan(Scan):
         command = [
             "ska_pst_stat_file_proc",
             "-d",
-            str(data_file),
+            str(data_file.file_name),
             "-w",
-            str(weights_file),
+            str(weights_file.file_name),
         ]
 
+        self.logger.info(f"Processing files {data_file.file_name.name}, {weights_file.file_name.name}")
+
         # improve subprocess check UDP gen in testutils
-        self.logger.info(f"running command: {command}")
+        self.logger.debug(f"running command: {command}")
         completed = subprocess.run(
             command,
             cwd=self.full_scan_path,
@@ -154,6 +179,7 @@ class VoltageRecorderScan(Scan):
         ok = completed.returncode == 0
         if not ok:
             self.logger.warning(f"command {command} failed: {completed.returncode}")
+            self._unprocessable_files.append(stats_file.file_name)
         return ok
 
     def get_all_files(self: VoltageRecorderScan) -> List[VoltageRecorderFile]:

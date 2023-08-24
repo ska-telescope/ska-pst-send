@@ -91,7 +91,7 @@ class SdpTransfer:
                 scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, logger=self.logger)
                 scan_transfer.start()
 
-                self.logger.info(f"Processing {local_scan.relative_scan_path}")
+                self.logger.info(f"Processing scan {local_scan.relative_scan_path}")
                 scan_process.join()
                 scan_transfer.join()
 
@@ -100,10 +100,12 @@ class SdpTransfer:
                         f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
                         + f"transferred={scan_transfer.completed}"
                     )
-
-                    self.logger.debug(f"notifying data product dashbord for {remote_scan.relative_scan_path}")
+                    self.logger.info(
+                        f"Completed processing and transfer of scan {local_scan.relative_scan_path}"
+                    )
 
                     if self.data_product_dashboard == "disabled":
+                        self.logger.info(f"deleting local copy of {local_scan.relative_scan_path}")
                         local_scan.delete_scan()
                     else:
                         self.logger.debug(

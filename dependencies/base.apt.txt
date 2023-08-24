@@ -1,3 +1,4 @@
+make
 pkg-config
 python3-distutils
 python3-setuptools

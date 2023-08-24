@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict
 
 import requests
 
@@ -29,7 +28,7 @@ class DpdApiClient:
         """Initialize the DpdApiClient with API endpoint.
 
         :param str endpoint: The endpoint of the API server. Consists of domain name and port number
-        :param logging.Logger | None logger: The logger instance to use.
+        :param logging.Logger: The logger instance to use.
         """
         self._endpoint = endpoint
         self._api_reindex_dataproducts = API_REINDEX_DATA_PRODUCTS
@@ -77,24 +76,17 @@ class DpdApiClient:
                     self._api_search_term in metadata_dict
                     and metadata_dict[self._api_search_term] == search_value
                 ):
+                    self.logger.debug(f"Metadata found={metadata_dict}")
                     return True  # Found a match, return True
 
             # If we reach here, search_value was not found in any "metadata_file" key
+            self.logger.error(
+                "Metadata not found",
+            )
+            self.logger.debug(f"metadata_list={metadata_list}")
             return False
         else:
             raise Exception(f"Failed to search for data products. Status code: {response.status_code}")
-
-    def get_metadata(self: DpdApiClient, search_value: str) -> Dict[str, bool]:
-        """Get metadata information for a given search value.
-
-        This method checks if metadata with the specified search value exists
-        and returns a dictionary indicating whether metadata was found.
-
-        Returns:
-            Dict[str, bool]: A dictionary indicating whether metadata exists.
-        """
-        metadata_found = self.metadata_exists(search_value)
-        return {"metadata_found": metadata_found}
 
     # Property and setter for the API endpoint
     @property

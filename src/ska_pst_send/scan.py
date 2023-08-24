@@ -107,3 +107,13 @@ class Scan:
         :rtype: bool
         """
         return self._scan_completed_file.exists()
+
+    @property
+    def data_product_file(self: Scan) -> pathlib.Path:
+        """
+        Return the pathlib object of the metadata file.
+
+        :return: pathlib object concerning the metadata file
+        :rtype pathlib.Path:
+        """
+        return self.full_scan_path / "ska-data-product.yaml"

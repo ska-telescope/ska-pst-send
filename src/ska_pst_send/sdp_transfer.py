@@ -111,22 +111,18 @@ class SdpTransfer:
                         )
                         self._dpd_api_client.reindex_dataproducts()
 
-                        if remote_scan._data_product_file.exists():
+                        if remote_scan.data_product_file_exists:
                             trim_path = str(self.remote_path / "product")
                             search_value = str(remote_scan.data_product_file)
                             search_value.replace(trim_path, "")
                             if self._dpd_api_client.metadata_exists(search_value=search_value):
-                                self.logger.info(
-                                    f"Metadata found in API call self._dpd_api_client.metadata_exists={self._dpd_api_client.metadata_exists()}"
-                                )
+                                self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
                                 local_scan.delete_scan()
                             else:
                                 self.logger.error(
-                                    f"Metadata not found in API call self._dpd_api_client.metadata_exists={self._dpd_api_client.metadata_exists()}"
+                                    f"Metadata not found. Retaining {local_scan.full_scan_path}"
                                 )
-                                self.logger.error(
-                                    f"self._dpd_api_client.get_metadata()={self._dpd_api_client.get_metadata()}"
-                                )
+
                         else:
                             self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
 

@@ -22,12 +22,13 @@ def dpd_api_endpoint() -> str:
 
 @pytest.fixture
 def dpd_api_client(dpd_api_endpoint: str) -> DpdApiClient:
+    """Fixture for DpdApiClient."""
     return DpdApiClient(dpd_api_endpoint)
 
 
-@patch("requests.get")
+@patch("ska_pst_send.dpd_api_client.requests.get")
 def test_metadata_exists_found(mock_get: MagicMock, dpd_api_client: DpdApiClient) -> None:
-    """Mock the GET request and response."""
+    """Test metadata_exists method when metadata is found."""
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = [
@@ -48,9 +49,9 @@ def test_metadata_exists_found(mock_get: MagicMock, dpd_api_client: DpdApiClient
     assert result is True
 
 
-@patch("requests.get")
+@patch("ska_pst_send.dpd_api_client.requests.get")
 def test_metadata_exists_not_found(mock_get: MagicMock, dpd_api_client: DpdApiClient) -> None:
-    """Mock the GET request and response."""
+    """Test metadata_exists method when metadata is not found."""
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = [
@@ -71,9 +72,9 @@ def test_metadata_exists_not_found(mock_get: MagicMock, dpd_api_client: DpdApiCl
     assert result is False
 
 
-@patch("requests.post")
+@patch("ska_pst_send.dpd_api_client.requests.post")
 def test_reindex_dataproducts_error(mock_post: MagicMock, dpd_api_client: DpdApiClient) -> None:
-    """Mock the POST request and response with an error status code."""
+    """Test reindex_dataproducts method with an error status code."""
     mock_response = MagicMock()
     mock_response.status_code = 500
     mock_post.return_value = mock_response
@@ -89,9 +90,9 @@ def test_reindex_dataproducts_error(mock_post: MagicMock, dpd_api_client: DpdApi
     assert str(excinfo.value) == "Failed to make POST request"
 
 
-@patch("requests.post")
+@patch("ska_pst_send.dpd_api_client.requests.post")
 def test_reindex_dataproducts_success(mock_post: MagicMock, dpd_api_client: DpdApiClient) -> None:
-    """Mock the POST request and response for a successful reindex."""
+    """Test reindex_dataproducts method with a successful response."""
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_post.return_value = mock_response
@@ -110,25 +111,3 @@ def test_set_endpoint(dpd_api_client: DpdApiClient) -> None:
 
     # Check that the endpoint has been updated correctly
     assert dpd_api_client.endpoint == "http://new-example.com:8081"
-
-
-def test_set_api_search_term(dpd_api_client: DpdApiClient) -> None:
-    """Test the setter method for the api_search_term property."""
-    # Set a new api_search_term
-    dpd_api_client.api_search_term = "new_metadata_file"
-
-    # Check that the api_search_term has been updated correctly
-    assert dpd_api_client.api_search_term == "new_metadata_file"
-
-
-@patch("ska_pst_send.dpd_api_client.DpdApiClient.metadata_exists")
-def test_get_metadata(mock_metadata_exists: MagicMock, dpd_api_client: DpdApiClient) -> None:
-    """Test the get_metadata method."""
-    # Mock metadata_exists to return True
-    mock_metadata_exists.return_value = True
-
-    # Call get_metadata
-    result: dict = dpd_api_client.get_metadata("file1")
-
-    # Check that the result is a dictionary with "metadata_found" set to True
-    assert result == {"metadata_found": True}

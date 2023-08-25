@@ -60,7 +60,7 @@ class DadaFileManager:
         weights_paths = list(self.folder.glob("weights/*.dada"))
         assert len(data_paths) == len(
             weights_paths
-        ), f"data_paths {len(data_paths)}!=weights_paths {len(weights_paths)}"
+        ), f"data_paths {len(data_paths)} != weights_paths {len(weights_paths)}"
 
         data_paths.sort()
         weights_paths.sort()
@@ -192,38 +192,38 @@ class DadaFileReader:
     @property
     def observer(self: DadaFileReader) -> str:
         """Get the OBSERVER value from header."""
-        return self._header["OBSERVER"]
+        return self._get_header_str("OBSERVER")
 
     @property
     def intent(self: DadaFileReader) -> str:
         """Build value using SOURCE from header."""
-        return f"Tied-array beam observation of {self._header['SOURCE']}"
+        return f"Tied-array beam observation of {self._get_header_str('SOURCE')}"
 
     @property
     def notes(self: DadaFileReader) -> str:
         """Get the NOTES value from header."""
-        # self._header['INTENT'] key error
-        return "notes TBD"
+        # note this key does not current exist
+        return self._get_header_str("INTENT")
 
     @property
     def source(self: DadaFileReader) -> str:
         """Get the SOURCE value from header."""
-        return self._header["SOURCE"]
+        return self._get_header_str("SOURCE")
 
     @property
     def utc_start(self: DadaFileReader) -> str:
         """Get the UTC_START value from header."""
-        return self._header["UTC_START"]
+        return self._get_header_str("UTC_START")
 
     @property
     def tsamp(self: DadaFileReader) -> str:
         """Get the TSAMP value from header."""
-        return self._header["TSAMP"]
+        return self._get_header_str("TSAMP")
 
     @property
     def telescope(self: DadaFileReader) -> str:
         """Get the TELESCOPE value from header."""
-        return self._header["TELESCOPE"]
+        return self._get_header_str("TELESCOPE")
 
     @property
     def nchan(self: DadaFileReader) -> str:
@@ -243,17 +243,30 @@ class DadaFileReader:
     @property
     def npol(self: DadaFileReader) -> str:
         """Get the NPOL value from header."""
-        return self._header["NPOL"]
+        return self._get_header_str("NPOL", "2")
 
     @property
     def stt_crd1(self: DadaFileReader) -> str:
         """Get the STT_CRD1 value from header."""
-        return self._header["STT_CRD1"]
+        return self._get_header_str("STT_CRD1", "00:00:00.0")
 
     @property
     def stt_crd2(self: DadaFileReader) -> str:
         """Get the STT_CRD2 value from header."""
-        return self._header["STT_CRD2"]
+        return self._get_header_str("STT_CRD2", "00:00:00.0")
+
+    def _get_header_str(self: DadaFileReader, key: str, default_value: str = "Unknown") -> str:
+        """
+        Get the header value of the specified key, or the default_value if not available.
+
+        :param key: header key to look for.
+        :param default_value: value to return if the key does not exist in the header.
+        :return: value of the header hey.
+        :rtype: str
+        """
+        if key in self._header:
+            return self.header[key]
+        return default_value
 
 
 LOW_BAND_CONFIG = {

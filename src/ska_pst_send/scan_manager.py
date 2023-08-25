@@ -32,9 +32,9 @@ class ScanManager:
     ) -> None:
         """Initialise a ScanManager object.
 
-        :param pathlib data_product_path: absolute file system path to the data product directory
-        :param str subsystem: The PST instance, one of pst-low or pst-mid
-        :param logging.Logger logger: The logger instance to use.
+        :param data_product_path: absolute file system path to the data product directory
+        :param subsystem: the PST instance, one of pst-low or pst-mid
+        :param logger: the logger instance to use.
         """
         assert data_product_path.exists() and data_product_path.is_dir()
         assert subsystem in PST_SUBSYSTEMS

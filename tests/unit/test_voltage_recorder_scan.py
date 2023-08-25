@@ -75,7 +75,7 @@ def test_next_unprocessed_file(
 
     # process each of the four data files, noting this will only work whilst the processor is "touch"
     for (i, df) in enumerate(data_files):
-        unprocessed_file = scan.next_unprocessed_file
+        unprocessed_file = scan.next_unprocessed_file(minimum_age=0)
         assert unprocessed_file is not None, f"Expected that there should be an unprocessed file for {df}"
         expected = (
             VoltageRecorderFile(scan.full_scan_path / sorted_data_files[i], scan.data_product_path),
@@ -103,9 +103,9 @@ def test_next_unprocessed_file(
         expected_cmd = [
             "ska_pst_stat_file_proc",
             "-d",
-            str(unprocessed_file[0]),
+            str(unprocessed_file[0].file_name),
             "-w",
-            str(unprocessed_file[1]),
+            str(unprocessed_file[1].file_name),
         ]
 
         mocked_command.assert_called_once_with(
@@ -121,4 +121,4 @@ def test_next_unprocessed_file(
         assert unprocessed_file[2].exists
         assert unprocessed_file[2] == expected[2]
 
-    assert scan.next_unprocessed_file is None
+    assert scan.next_unprocessed_file(minimum_age=0) is None

@@ -12,7 +12,7 @@ LABEL \
     description="This image includes the dependencies for building ska-pst-send" \
     base="${SEND_BASE_IMAGE}" \
     org.skatelescope.team="PST Team" \
-    org.skatelescope.version="0.0.0" \
+    org.skatelescope.version="0.0.1" \
     int.skao.application="ska-pst-send Builder"
 
 WORKDIR /app
@@ -50,7 +50,7 @@ ARG POETRY_VERSION="1.2.2"
 COPY install-poetry.py .
 RUN python3 install-poetry.py --version ${POETRY_VERSION} \
     && ln -sfn /usr/bin/python3 /usr/bin/python \
-    && ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry 
+    && ln -sfn /opt/poetry/bin/poetry /usr/local/bin/poetry
 
 COPY src/ /app/src/
 COPY tests/ /app/tests/

@@ -27,8 +27,8 @@ class DpdApiClient:
     ) -> None:
         """Initialize the DpdApiClient with API endpoint.
 
-        :param str endpoint: The endpoint of the API server. Consists of domain name and port number
-        :param logging.Logger: The logger instance to use.
+        :param endpoint: The endpoint of the API server. Consists of domain name and port number
+        :param logger: the logger instance to use.
         """
         self._endpoint = endpoint
         self._api_reindex_dataproducts = API_REINDEX_DATA_PRODUCTS

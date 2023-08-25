@@ -31,17 +31,19 @@ class ScanTransfer(threading.Thread):
         exit_cond: threading.Condition,
         loop_wait: float = 2,
         dir_perms: int = 0o777,
+        minimum_age: float = 10,
         logger: logging.Logger | None = None,
     ) -> None:
         """
         Initialise the ScanTransfer object.
 
-        :param VoltageRecorderScan local_scan: scan to be transferred to the remote.
-        :param VoltageRecorderScan remote_scan: scan to which the local scan will be transferred.
-        :param threading.Condition exit_cond: condition variable to use to trigger thread termination.
-        :param logging.Logger logger: The logger instance to use.
-        :param int loop_wait: timeout for the main processing loop.
-        :param int dir_perms: octal permissions to apply when creating directories during transfer.
+        :param local_scan: scan to be transferred to the remote.
+        :param remote_scan: scan to which the local scan will be transferred.
+        :param exit_cond: condition variable to use to trigger thread termination.
+        :param loop_wait: timeout for the main processing loop.
+        :param dir_perms: octal permissions to apply when creating directories during transfer.
+        :param minimum_age: minimum age to require for untransferred files, in seconds.
+        :param logger: the logger instance to use.
         """
         threading.Thread.__init__(self, daemon=True)
 
@@ -49,16 +51,17 @@ class ScanTransfer(threading.Thread):
         self.remote_scan = remote_scan
         self.exit_cond = exit_cond
         self.logger = logger or logging.getLogger(__name__)
-        self.completed = False
         self.loop_wait = loop_wait
         self.default_dir_perms = dir_perms
+        self.minimum_age = minimum_age
+        self.completed = False
         self.logger.debug(f"local={local_scan.data_product_path} remote={remote_scan.data_product_path}")
 
-    @property
-    def untransferred_files(self: ScanTransfer) -> List[VoltageRecorderFile]:
+    def untransferred_files(self: ScanTransfer, minimum_age: float) -> List[VoltageRecorderFile]:
         """
         Return the list of untransferred files for the scan.
 
+        :param minimum_age: minimum file age to use when returning untransferred files
         :return: the list of voltage recorder files
         :rtype: List[VoltageRecorderFile].
         """
@@ -72,10 +75,10 @@ class ScanTransfer(threading.Thread):
         self.logger.debug(f"remote_files count={len(remote_files)}")
 
         # build the list of untransferred files
-        untransferred_files = [local for local in local_files if local not in remote_files]
-        self.logger.debug(f"untransferred_files count={len(untransferred_files)}")
+        files = [local for local in local_files if local not in remote_files and local.age >= minimum_age]
+        self.logger.debug(f"files count={len(files)}")
 
-        return sorted(untransferred_files)
+        return sorted(files)
 
     def run(self: ScanTransfer) -> None:
         """Run the transfer for the Scan from local to remote."""
@@ -84,8 +87,8 @@ class ScanTransfer(threading.Thread):
         remote_path = self.remote_scan.data_product_path
 
         while not self.completed:
-            for untransferred_file in self.untransferred_files:
-                self.logger.debug(f"untransferred_file={untransferred_file}")
+            for untransferred_file in self.untransferred_files(self.minimum_age):
+                self.logger.debug(f"untransferred_file={untransferred_file} with age > {self.minimum_age}")
 
                 # check for the exit condition, with a small timeout
                 with self.exit_cond:
@@ -100,13 +103,14 @@ class ScanTransfer(threading.Thread):
                 shutil.copyfile(local_file, remote_file)
 
             # check if the scan is completed and the ScanProcess has generated the data-product-file
-            if (
-                len(self.untransferred_files) == 0
+            self.completed = (
+                len(self.untransferred_files(minimum_age=0)) == 0
                 and self.local_scan.is_complete
                 and self.local_scan.data_product_file_exists
-            ):
-                self.completed = True
-            else:
+            )
+
+            # if not yet completed, timeout wait on the exit condition
+            if not self.completed:
                 with self.exit_cond:
                     if self.exit_cond.wait(timeout=self.loop_wait):
                         self.logger.debug("ScanTransfer thread exiting on command")

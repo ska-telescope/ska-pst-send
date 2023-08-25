@@ -19,22 +19,22 @@
 .. This project most likely has it's own README. We include it here.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Readme
+  :maxdepth: 2
+  :caption: Readme
 
-   ../../README
+  ../../README
 
 .. COMMUNITY SECTION ==================================================
 
 ..
 
 .. toctree::
-  :caption: ska-pst-protosend
+  :caption: ska-pst-send
 
   package/guide
 
 
-SKA-PST-PROTOSEND
+SKA-PST-SEND
 ==================================
 
 These are all the packages, functions and scripts that form part of the project.

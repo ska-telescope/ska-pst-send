@@ -63,13 +63,7 @@ class MetaDataBuilder:
             assert len(self._dada_file_manager.data_files) > 0, "Expected at least 1 data file"
             assert len(self._dada_file_manager.weights_files) > 0, "Expected at least 1 weights file"
 
-            date_object = datetime.strptime(
-                self.dada_file_manager.data_files[0].utc_start, "%Y-%m-%d-%H:%M:%S"
-            )
-            formatted_date = date_object.strftime("%Y%m%d")
-            scan_id = self.dada_file_manager.data_files[0].scan_id
-
-            self._pst_metadata.execution_block = f"eb-{formatted_date}-{scan_id}"
+            self._pst_metadata.execution_block = self.dada_file_manager.data_files[0].eb_id
 
             self.build_context()
 
@@ -156,7 +150,7 @@ class MetaDataBuilder:
         stt_crd2 = first_file.stt_crd2
 
         # Populate metadata fields using the header
-        obs_id = str(scan_id)
+        obs_id = scan_id
         target_name = self.dada_file_manager.data_files[0].source
 
         dec_decimal = Angle(stt_crd2, unit="degree")

@@ -185,9 +185,14 @@ class DadaFileReader:
         return int(self._header["FILE_NUMBER"])
 
     @property
-    def scan_id(self: DadaFileReader) -> int:
+    def eb_id(self: DadaFileReader) -> str:
+        """Get the EB_ID value from the header."""
+        return self._header["EB_ID"]
+
+    @property
+    def scan_id(self: DadaFileReader) -> str:
         """Get the SCAN_ID value from header."""
-        return int(self._header["SCAN_ID"])
+        return self._get_header_str("SCAN_ID")
 
     @property
     def observer(self: DadaFileReader) -> str:

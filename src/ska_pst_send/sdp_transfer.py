@@ -114,10 +114,11 @@ class SdpTransfer:
                         self._dpd_api_client.reindex_dataproducts()
 
                         if remote_scan.data_product_file_exists:
-                            trim_path = str(self.remote_path / "product")
+                            trim_path = str(self.remote_path)
+                            self.logger.debug(f"trim_path={trim_path}")
                             search_value = str(remote_scan.data_product_file)
                             search_value.replace(trim_path, "")
-                            self.logger.debug(f"SDP Data Product Dashboard search_value={search_value}")
+                            self.logger.debug(f"search_value={search_value}")
                             if self._dpd_api_client.metadata_exists(search_value=search_value):
                                 self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
                                 local_scan.delete_scan()

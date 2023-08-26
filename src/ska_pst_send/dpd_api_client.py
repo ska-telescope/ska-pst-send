@@ -43,7 +43,7 @@ class DpdApiClient:
         """
         self.logger.debug("Calling DPD reindex dataproducts API")
         url = f"{self._endpoint}/{self._api_reindex_dataproducts}"
-        response = requests.post(url)
+        response = requests.get(url, headers={"accept": "application/json"})
         if response.ok:
             self.logger.debug(
                 f"DPD reindex dataproducts API successful return code. response={response.json()}"

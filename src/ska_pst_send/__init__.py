@@ -8,6 +8,7 @@
 """Module init code."""
 import logging
 
+from .dpd_api_client import DpdApiClient
 from .metadata_builder import MetaDataBuilder
 from .scan import Scan
 from .scan_manager import ScanManager
@@ -18,6 +19,7 @@ from .voltage_recorder_scan import VoltageRecorderScan
 from .voltage_recorder_file import VoltageRecorderFile
 
 __all__ = [
+    "DpdApiClient",
     "Scan",
     "ScanManager",
     "ScanTransfer",

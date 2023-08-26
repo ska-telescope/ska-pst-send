@@ -80,14 +80,14 @@ def test_reindex_dataproducts_error(mock_get: MagicMock, dpd_api_client: DpdApiC
     mock_get.return_value = mock_response
 
     # Explicitly raise an exception when requests.get is called
-    mock_get.side_effect = Exception("Failed to make POST request")
+    mock_get.side_effect = Exception("Failed to make GET request")
 
     # Perform the reindex
     with pytest.raises(Exception) as excinfo:
         dpd_api_client.reindex_dataproducts()
 
     # Check that the expected exception is raised
-    assert str(excinfo.value) == "Failed to make POST request"
+    assert str(excinfo.value) == "Failed to make GET request"
 
 
 @patch("ska_pst_send.dpd_api_client.requests.get")

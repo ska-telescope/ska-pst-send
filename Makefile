@@ -29,7 +29,7 @@ PST_OCI_SEND_BUILDER_TAG ?= 0.0.1
 PST_OCI_SEND_RUNTIME_IMAGE ?= library/ubuntu
 PST_OCI_SEND_RUNTIME_TAG ?= 22.04
 PST_OCI_STAT_RUNTIME_IMAGE ?= ska-pst-stat
-PST_OCI_STAT_RUNTIME_TAG ?= 0.3.0
+PST_OCI_STAT_RUNTIME_TAG ?= 0.3.1
 
 SKA_RELEASE_REGISTRY ?= artefact.skao.int
 PST_DEV_REGISTRY ?= registry.gitlab.com/ska-telescope/pst

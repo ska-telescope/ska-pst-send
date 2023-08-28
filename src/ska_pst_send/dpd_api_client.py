@@ -43,7 +43,7 @@ class DpdApiClient:
         """
         self.logger.debug("Calling DPD reindex dataproducts API")
         url = f"{self._endpoint}/{self._api_reindex_dataproducts}"
-        response = requests.post(url)
+        response = requests.get(url, headers={"accept": "application/json"})
         if response.ok:
             self.logger.debug(
                 f"DPD reindex dataproducts API successful return code. response={response.json()}"
@@ -73,7 +73,7 @@ class DpdApiClient:
             for metadata_dict in metadata_list:
                 # Check if "api_search_term" key exists and its value matches search_value
                 if (
-                    self._api_search_term in metadata_dict
+                    self._api_search_term in metadata_dict.keys()
                     and metadata_dict[self._api_search_term] == search_value
                 ):
                     self.logger.debug(f"Metadata found={metadata_dict}")
@@ -81,9 +81,12 @@ class DpdApiClient:
 
             # If we reach here, search_value was not found in any "metadata_file" key
             self.logger.error(
-                "Metadata not found",
+                f"""Metadata not found
+                api_search_term={self._api_search_term}
+                search_value={search_value}
+                metadata_list={str(metadata_list)}
+                """
             )
-            self.logger.debug(f"metadata_list={metadata_list}")
             return False
         else:
             raise Exception(f"Failed to search for data products. Status code: {response.status_code}")

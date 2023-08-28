@@ -72,36 +72,38 @@ def test_metadata_exists_not_found(mock_get: MagicMock, dpd_api_client: DpdApiCl
     assert result is False
 
 
-@patch("ska_pst_send.dpd_api_client.requests.post")
-def test_reindex_dataproducts_error(mock_post: MagicMock, dpd_api_client: DpdApiClient) -> None:
+@patch("ska_pst_send.dpd_api_client.requests.get")
+def test_reindex_dataproducts_error(mock_get: MagicMock, dpd_api_client: DpdApiClient) -> None:
     """Test reindex_dataproducts method with an error status code."""
     mock_response = MagicMock()
     mock_response.status_code = 500
-    mock_post.return_value = mock_response
+    mock_get.return_value = mock_response
 
-    # Explicitly raise an exception when requests.post is called
-    mock_post.side_effect = Exception("Failed to make POST request")
+    # Explicitly raise an exception when requests.get is called
+    mock_get.side_effect = Exception("Failed to make GET request")
 
     # Perform the reindex
     with pytest.raises(Exception) as excinfo:
         dpd_api_client.reindex_dataproducts()
 
     # Check that the expected exception is raised
-    assert str(excinfo.value) == "Failed to make POST request"
+    assert str(excinfo.value) == "Failed to make GET request"
 
 
-@patch("ska_pst_send.dpd_api_client.requests.post")
-def test_reindex_dataproducts_success(mock_post: MagicMock, dpd_api_client: DpdApiClient) -> None:
+@patch("ska_pst_send.dpd_api_client.requests.get")
+def test_reindex_dataproducts_success(mock_get: MagicMock, dpd_api_client: DpdApiClient) -> None:
     """Test reindex_dataproducts method with a successful response."""
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_post.return_value = mock_response
+    mock_get.return_value = mock_response
 
     # Call the reindex_dataproducts method
     dpd_api_client.reindex_dataproducts()
 
     # Check that the POST request was made with the correct URL
-    mock_post.assert_called_once_with("http://example.com:8080/reindexdataproducts")
+    mock_get.assert_called_once_with(
+        "http://example.com:8080/reindexdataproducts", headers={"accept": "application/json"}
+    )
 
 
 def test_set_endpoint(dpd_api_client: DpdApiClient) -> None:

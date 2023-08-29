@@ -13,6 +13,7 @@ import pathlib
 import threading
 from signal import SIGINT, SIGTERM, signal
 from types import FrameType
+from typing import Optional
 
 from ska_ser_logging import configure_logging
 
@@ -132,6 +133,11 @@ class SdpTransfer:
                     if self._cond.wait(timeout=self._cond_timeout):
                         self.logger.info("SDPTransfer exiting on command")
                         return
+
+    @property
+    def dpd_api_client(self: SdpTransfer) -> Optional[DpdApiClient]:
+        """Returns DpdApiClient or None if data_product_dashboard is 'disabled'."""
+        return self._dpd_api_client
 
 
 def main() -> None:

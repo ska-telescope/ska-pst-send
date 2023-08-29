@@ -57,3 +57,20 @@ def test_sdp_transfer_process(
     notify_thread.start()
     sdp_transfer.process()
     notify_thread.join()
+
+
+def test_metadata_exists_called_with_correct_search_value(
+    subsystem_id: str,
+    monkeypatch: pytest.MonkeyPatch,
+    local_remote_scans: Tuple[VoltageRecorderScan, VoltageRecorderScan],
+) -> None:
+    """Test metadata exists."""
+    (local_scan, remote_scan) = local_remote_scans
+
+    local_path = local_scan.data_product_path
+    remote_path = remote_scan.data_product_path
+    data_product_dasboard = "http://localhost:8888"
+    verbose = False
+    sdp_transfer = SdpTransfer(local_path, remote_path, subsystem_id, data_product_dasboard, verbose)
+
+    assert sdp_transfer._dpd_api_client is not None

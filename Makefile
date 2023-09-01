@@ -25,11 +25,11 @@ DEV_IMAGE ?= artefact.skao.int/ska-pst-send-builder
 DEV_TAG = `grep -m 1 -o '[0-9].*' .release`
 SEND_BASE_IMAGE ?= library/ubuntu:22.04
 PST_OCI_SEND_BUILDER_IMAGE ?= ska-pst-send-builder
-PST_OCI_SEND_BUILDER_TAG ?= 0.0.2
+PST_OCI_SEND_BUILDER_TAG ?= 0.0.3
 PST_OCI_SEND_RUNTIME_IMAGE ?= library/ubuntu
 PST_OCI_SEND_RUNTIME_TAG ?= 22.04
 PST_OCI_STAT_RUNTIME_IMAGE ?= ska-pst-stat
-PST_OCI_STAT_RUNTIME_TAG ?= 0.3.2
+PST_OCI_STAT_RUNTIME_TAG ?= 0.3.3
 
 SKA_RELEASE_REGISTRY ?= artefact.skao.int
 PST_DEV_REGISTRY ?= registry.gitlab.com/ska-telescope/pst

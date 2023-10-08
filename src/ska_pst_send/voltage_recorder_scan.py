@@ -63,9 +63,9 @@ class VoltageRecorderScan(Scan):
         ]
 
         self._config_files = []
-        if self.data_product_file_exists:
+        if self.data_product_file_exists():
             self._config_files.append(VoltageRecorderFile(self._data_product_file, self.data_product_path))
-        if self.scan_config_file_exists:
+        if self.scan_config_file_exists():
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
 
     def generate_data_product_file(self: VoltageRecorderScan) -> bool:
@@ -76,7 +76,7 @@ class VoltageRecorderScan(Scan):
         :rtype: bool
         """
         # ensure the scan is marked as completed
-        if not self.is_complete:
+        if not self.is_complete():
             self.logger.warning("Cannot generate data product file as scan is not marked as completed")
             return False
 
@@ -124,7 +124,7 @@ class VoltageRecorderScan(Scan):
             )
 
             # if the stat file already exists, then no need to generate
-            if stat_file.exists:
+            if stat_file.exists():
                 continue
 
             # stat file cannot be generated due to a previous processing failure

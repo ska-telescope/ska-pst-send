@@ -66,8 +66,8 @@ class ScanProcess(threading.Thread):
                     self.unprocessable_files.append(unprocessed_file[2].file_name)
 
             # test if the scan_completed marker exists and there are no unprocessed files of any age
-            if self.scan.is_complete and self.scan.next_unprocessed_file(minimum_age=0) is None:
-                if not self.scan.data_product_file_exists:
+            if self.scan.is_complete() and self.scan.next_unprocessed_file(minimum_age=0) is None:
+                if not self.scan.data_product_file_exists():
                     self.logger.debug("generating data product YAML file")
                     self.scan.generate_data_product_file()
                 self.completed = True

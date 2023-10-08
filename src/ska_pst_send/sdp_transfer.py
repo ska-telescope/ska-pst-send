@@ -66,6 +66,48 @@ class SdpTransfer:
         with self._cond:
             self._cond.notify_all()
 
+    def _proccess_voltage_recorder_scan(self: SdpTransfer, local_scan: VoltageRecorderScan) -> None:
+        # construct a remote scan object for comparison
+        remote_scan = VoltageRecorderScan(self.remote_path, local_scan.relative_scan_path, logger=self.logger)
+
+        # perform post-processing on the scan to generate output files for transfer
+        scan_process = ScanProcess(local_scan, self._cond, logger=self.logger)
+        scan_process.start()
+
+        # perform the file transfer of output files to the remote storage
+        scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, logger=self.logger)
+        scan_transfer.start()
+
+        self.logger.info(f"Processing scan {local_scan.relative_scan_path}")
+        scan_process.join()
+        scan_transfer.join()
+
+        if scan_process.completed and scan_transfer.completed:
+            self.logger.debug(
+                f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
+                + f"transferred={scan_transfer.completed}"
+            )
+            self.logger.info(f"Completed processing and transfer of scan {local_scan.relative_scan_path}")
+
+            if self.data_product_dashboard == "disabled":
+                self.logger.info(f"deleting local copy of {local_scan.relative_scan_path}")
+                local_scan.delete_scan()
+            else:
+                self.logger.debug(f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}")
+                self._dpd_api_client.reindex_dataproducts()
+
+                if remote_scan.data_product_file_exists():
+                    search_value = str(remote_scan.data_product_file.relative_to(self.remote_path))
+                    self.logger.debug(f"search_value={search_value}")
+                    if self._dpd_api_client.metadata_exists(search_value=search_value):
+                        self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
+                        local_scan.delete_scan()
+                    else:
+                        self.logger.error(f"Metadata not found. Retaining {local_scan.full_scan_path}")
+
+                else:
+                    self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
+
     def process(self: SdpTransfer) -> None:
         """Primary processing method for the PST to SDP transfer."""
         self.logger.debug(f"local_path={self.local_path} remote_path={self.remote_path}")
@@ -78,55 +120,7 @@ class SdpTransfer:
             local_scan = scan_manager.oldest_scan
 
             if local_scan is not None:
-
-                # construct a remote scan object for comparison
-                remote_scan = VoltageRecorderScan(
-                    self.remote_path, local_scan.relative_scan_path, logger=self.logger
-                )
-
-                # perform post-processing on the scan to generate output files for transfer
-                scan_process = ScanProcess(local_scan, self._cond, logger=self.logger)
-                scan_process.start()
-
-                # perform the file transfer of output files to the remote storage
-                scan_transfer = ScanTransfer(local_scan, remote_scan, self._cond, logger=self.logger)
-                scan_transfer.start()
-
-                self.logger.info(f"Processing scan {local_scan.relative_scan_path}")
-                scan_process.join()
-                scan_transfer.join()
-
-                if scan_process.completed and scan_transfer.completed:
-                    self.logger.debug(
-                        f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
-                        + f"transferred={scan_transfer.completed}"
-                    )
-                    self.logger.info(
-                        f"Completed processing and transfer of scan {local_scan.relative_scan_path}"
-                    )
-
-                    if self.data_product_dashboard == "disabled":
-                        self.logger.info(f"deleting local copy of {local_scan.relative_scan_path}")
-                        local_scan.delete_scan()
-                    else:
-                        self.logger.debug(
-                            f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}"
-                        )
-                        self._dpd_api_client.reindex_dataproducts()
-
-                        if remote_scan.data_product_file_exists:
-                            search_value = str(remote_scan.data_product_file.relative_to(self.remote_path))
-                            self.logger.debug(f"search_value={search_value}")
-                            if self._dpd_api_client.metadata_exists(search_value=search_value):
-                                self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
-                                local_scan.delete_scan()
-                            else:
-                                self.logger.error(
-                                    f"Metadata not found. Retaining {local_scan.full_scan_path}"
-                                )
-
-                        else:
-                            self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
+                self._proccess_voltage_recorder_scan(local_scan)
 
             if self._persist:
                 with self._cond:

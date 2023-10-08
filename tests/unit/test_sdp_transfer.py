@@ -96,7 +96,7 @@ def test_metadata_exists_called_with_correct_search_value(
     data_product_file = remote_path / expected_search_value
     logger.info(f"data_product_file={data_product_file}")
     mock_voltage_recorder_scan = MagicMock()
-    mock_voltage_recorder_scan.data_product_file_exists = True
+    mock_voltage_recorder_scan.data_product_file_exists.return_value = True
     mock_voltage_recorder_scan.data_product_file = data_product_file
     logger.info(
         f"mock_voltage_recorder_scan.data_product_file={mock_voltage_recorder_scan.data_product_file}"

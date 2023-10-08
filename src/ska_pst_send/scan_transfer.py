@@ -105,8 +105,8 @@ class ScanTransfer(threading.Thread):
             # check if the scan is completed and the ScanProcess has generated the data-product-file
             self.completed = (
                 len(self.untransferred_files(minimum_age=0)) == 0
-                and self.local_scan.is_complete
-                and self.local_scan.data_product_file_exists
+                and self.local_scan.is_complete()
+                and self.local_scan.data_product_file_exists()
             )
 
             # if not yet completed, timeout wait on the exit condition

@@ -68,7 +68,6 @@ class Scan:
                 self.logger.debug(f"walked above data_product_path, stopping prune: {exc}")
                 return
 
-    @property
     def is_recording(self: Scan) -> bool:
         """
         Return true is the scan been not yet been marked as completed.
@@ -78,7 +77,6 @@ class Scan:
         """
         return not self._scan_completed_file.exists()
 
-    @property
     def data_product_file_exists(self: Scan) -> bool:
         """
         Return true if the ska-pst-dataproduct.yaml file exists.
@@ -88,7 +86,6 @@ class Scan:
         """
         return self._data_product_file.exists()
 
-    @property
     def scan_config_file_exists(self: Scan) -> bool:
         """
         Return true if the scan-config.json file exists.
@@ -98,7 +95,6 @@ class Scan:
         """
         return self._scan_config_file.exists()
 
-    @property
     def is_complete(self: Scan) -> bool:
         """
         Return true if the scan_completed file exists.

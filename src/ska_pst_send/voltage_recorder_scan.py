@@ -191,4 +191,4 @@ class VoltageRecorderScan(Scan):
         :rtype: List[VoltageRecorderFile]
         """
         self.update_files()
-        return self._data_files + self._weights_files + self._stats_files + self._config_files
+        return [*self._data_files, *self._weights_files, *self._stats_files, *self._config_files]

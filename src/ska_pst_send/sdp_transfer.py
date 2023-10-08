@@ -13,11 +13,13 @@ import pathlib
 import threading
 from signal import SIGINT, SIGTERM, signal
 from types import FrameType
-from typing import Optional
+from typing import Any, Optional
 
+import backoff
 from ska_ser_logging import configure_logging
 
 from .dpd_api_client import DpdApiClient
+from .scan import Scan
 from .scan_manager import ScanManager
 from .scan_process import ScanProcess
 from .scan_transfer import ScanTransfer
@@ -66,6 +68,34 @@ class SdpTransfer:
         with self._cond:
             self._cond.notify_all()
 
+    def _ensure_scan_indexed_in_dpd(self: SdpTransfer, local_scan: Scan, remote_scan: Scan) -> None:
+        assert local_scan.data_product_file_exists(), f"Expected {local_scan.data_product_file} to exist"
+        assert remote_scan.data_product_file_exists(), f"Expected {remote_scan.data_product_file} to exist"
+
+        self.logger.debug(f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}")
+        self._dpd_api_client.reindex_dataproducts()
+
+        search_value = str(remote_scan.data_product_file.relative_to(self.remote_path))
+        self.logger.debug(f"search_value={search_value}")
+
+        def _on_giveup(*args: Any, **kwargs: Any) -> None:
+            self.logger.error(f"Metadata not found. Retaining {local_scan.full_scan_path}")
+
+        def _on_success(*args: Any, **kwargs: Any) -> None:
+            self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
+            local_scan.delete_scan()
+
+        @backoff.on_predicate(
+            backoff.expo,
+            on_giveup=_on_giveup,
+            on_success=_on_success,
+            max_time=120.0,
+        )
+        def _check_scan_indexed() -> bool:
+            return self._dpd_api_client.metadata_exists(search_value=search_value)
+
+        _check_scan_indexed()
+
     def _proccess_voltage_recorder_scan(self: SdpTransfer, local_scan: VoltageRecorderScan) -> None:
         # construct a remote scan object for comparison
         remote_scan = VoltageRecorderScan(self.remote_path, local_scan.relative_scan_path, logger=self.logger)
@@ -93,20 +123,7 @@ class SdpTransfer:
                 self.logger.info(f"deleting local copy of {local_scan.relative_scan_path}")
                 local_scan.delete_scan()
             else:
-                self.logger.debug(f"SDP Data Product Dashboard endpoint={self.data_product_dashboard}")
-                self._dpd_api_client.reindex_dataproducts()
-
-                if remote_scan.data_product_file_exists():
-                    search_value = str(remote_scan.data_product_file.relative_to(self.remote_path))
-                    self.logger.debug(f"search_value={search_value}")
-                    if self._dpd_api_client.metadata_exists(search_value=search_value):
-                        self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
-                        local_scan.delete_scan()
-                    else:
-                        self.logger.error(f"Metadata not found. Retaining {local_scan.full_scan_path}")
-
-                else:
-                    self.logger.error(f"{self.remote_path}/ska-data-product.yaml does not exist!")
+                self._ensure_scan_indexed_in_dpd(local_scan=local_scan, remote_scan=remote_scan)
 
     def process(self: SdpTransfer) -> None:
         """Primary processing method for the PST to SDP transfer."""

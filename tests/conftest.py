@@ -209,7 +209,7 @@ def voltage_recording_scan_factory(
         scan._scan_config_file.touch()
         for scan_file in scan_files:
             full_scan_file_path = scan.full_scan_path / scan_file
-            full_scan_file_path.mkdir(mode=0o777, parents=True, exist_ok=True)
+            full_scan_file_path.parent.mkdir(mode=0o777, parents=True, exist_ok=True)
             full_scan_file_path.touch(mode=0o777)
         return scan
 

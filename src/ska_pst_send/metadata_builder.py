@@ -39,12 +39,15 @@ class MetaDataBuilder:
     def __init__(
         self: MetaDataBuilder,
         dsp_mount_path: pathlib.Path | None = None,
+        dada_file_manager: DadaFileManager | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         """Create instance of PST metadata object."""
         self.logger = logger or logging.getLogger(__name__)
         self._dsp_mount_path = dsp_mount_path or pathlib.Path(DEFAULT_DSP_MOUNT)
-        self._dada_file_manager: DadaFileManager | None = None
+        self._dada_file_manager = dada_file_manager or DadaFileManager(
+            folder=self._dsp_mount_path, logger=logger
+        )
         self._pst_metadata = PstMetaData(interface=INTERFACE)
 
     def init_dada_file_manager(self: MetaDataBuilder) -> None:
@@ -56,46 +59,48 @@ class MetaDataBuilder:
         self._dsp_mount_path = pathlib.Path(env_dsp_mount_path) if env_dsp_mount_path else DEFAULT_DSP_MOUNT
         self._dada_file_manager = DadaFileManager(folder=pathlib.Path(self._dsp_mount_path))
 
-    def build_metadata(self: MetaDataBuilder) -> None:
+    def generate_metadata(self: MetaDataBuilder) -> None:
+        """Build and write the metadata product."""
+        self._build_metadata()
+        self.write_metadata()
+
+    def _build_metadata(self: MetaDataBuilder) -> None:
         """Build the PstMetaData object."""
         try:
             assert self._dada_file_manager is not None, "Expected init_dada_file_manager to have been called."
             assert len(self._dada_file_manager.data_files) > 0, "Expected at least 1 data file"
             assert len(self._dada_file_manager.weights_files) > 0, "Expected at least 1 weights file"
 
-            self._pst_metadata.execution_block = self.dada_file_manager.data_files[0].eb_id
+            self._pst_metadata.execution_block = self._dada_file_manager.data_files[0].eb_id
 
-            self.build_context()
-
-            self.build_config()
-
-            self.build_files()
-
-            self.build_obscore()
+            self._build_context()
+            self._build_config()
+            self._build_files()
+            self._build_obscore()
 
         except Exception as e:
             # Handle exceptions here, for example, log the error
             self.logger.error(f"An error occurred while building metadata: {str(e)}")
 
-    def build_context(self: MetaDataBuilder) -> None:
+    def _build_context(self: MetaDataBuilder) -> None:
         """Populate Fields used for PstContext."""
-        self._pst_metadata.context.observer = self.dada_file_manager.data_files[0].observer
-        self._pst_metadata.context.intent = self.dada_file_manager.data_files[0].intent
-        self._pst_metadata.context.notes = self.dada_file_manager.data_files[0].notes
+        self._pst_metadata.context.observer = self._dada_file_manager.data_files[0].observer
+        self._pst_metadata.context.intent = self._dada_file_manager.data_files[0].intent
+        self._pst_metadata.context.notes = self._dada_file_manager.data_files[0].notes
 
-    def build_config(self: MetaDataBuilder) -> None:
+    def _build_config(self: MetaDataBuilder) -> None:
         """Build PstConfig. Placeholder for replacing defaults."""
         self._pst_metadata.config.image = CONFIG_IMAGE
         self._pst_metadata.config.version = CONFIG_VERSION
 
-    def build_files(self: MetaDataBuilder) -> None:
+    def _build_files(self: MetaDataBuilder) -> None:
         """Build PstFiles used for file block in metadata file.."""
         total_data_size = 0
         total_weights_size = 0
         dada_files = []
-        for index in range(0, len(self.dada_file_manager.data_files)):
-            total_data_size += self.dada_file_manager.data_files[index].file_size
-            total_weights_size += self.dada_file_manager.weights_files[index].file_size
+        for index in range(0, len(self._dada_file_manager.data_files)):
+            total_data_size += self._dada_file_manager.data_files[index].file_size
+            total_weights_size += self._dada_file_manager.weights_files[index].file_size
 
         dada_files.append(
             PstFiles(
@@ -135,10 +140,10 @@ class MetaDataBuilder:
 
         return float(Decimal(rounded_mjd))
 
-    def build_obscore(self: MetaDataBuilder) -> None:
+    def _build_obscore(self: MetaDataBuilder) -> None:
         """Build PstObsCore used for obscore block in metadata file."""
         # Grab fields from header file
-        first_file = self.dada_file_manager.data_files[0]
+        first_file = self._dada_file_manager.data_files[0]
         utc_start = first_file.utc_start
         scan_id = first_file.scan_id
         tsamp = float(first_file.tsamp)
@@ -151,7 +156,7 @@ class MetaDataBuilder:
 
         # Populate metadata fields using the header
         obs_id = scan_id
-        target_name = self.dada_file_manager.data_files[0].source
+        target_name = self._dada_file_manager.data_files[0].source
 
         dec_decimal = Angle(stt_crd2, unit="degree")
 
@@ -187,7 +192,7 @@ class MetaDataBuilder:
         total_data_size = data_files.size
         total_header_size = 0
 
-        for f in self.dada_file_manager.data_files:
+        for f in self._dada_file_manager.data_files:
             total_header_size += f.header_size
 
         access_estsize = total_data_size - total_header_size
@@ -253,26 +258,6 @@ class MetaDataBuilder:
             yaml.dump(asdict(self.pst_metadata), yaml_file)
 
     @property
-    def dada_file_manager(self: MetaDataBuilder) -> DadaFileManager:
-        """Getter public method.
-
-        dada_file_manager as a property of MetaDataBuilder.
-        """
-        assert self._dada_file_manager is not None, (
-            "Expected dada_file_manager to have been initialised. "
-            "Perhaps init_dada_file_manager has not been called."
-        )
-        return self._dada_file_manager
-
-    @dada_file_manager.setter
-    def dada_file_manager(self: MetaDataBuilder, dada_file_manager: DadaFileManager) -> None:
-        """Set the DADA file manager to use when creating metadata file.
-
-        :param dada_file_manager: the DADA file manager to use when creating metadata file.
-        """
-        self._dada_file_manager = dada_file_manager
-
-    @property
     def dsp_mount_path(self: MetaDataBuilder) -> pathlib.Path:
         """Getter public method.
 
@@ -290,8 +275,7 @@ class MetaDataBuilder:
         # if already a Path this returns a path
         path = pathlib.Path(path)
         self._dsp_mount_path = path
-        if self._dada_file_manager:
-            self._dada_file_manager.folder = path
+        self._dada_file_manager.folder = path
 
     @property
     def pst_metadata(self: MetaDataBuilder) -> PstMetaData:

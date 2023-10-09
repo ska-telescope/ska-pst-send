@@ -11,9 +11,9 @@ from __future__ import annotations
 import logging
 import pathlib
 import subprocess
-from typing import List, Tuple
+from typing import Generator, List, Tuple
 
-from .metadata_builder import DadaFileManager, MetaDataBuilder
+from .metadata_builder import MetaDataBuilder
 from .scan import Scan
 from .voltage_recorder_file import VoltageRecorderFile
 
@@ -89,10 +89,8 @@ class VoltageRecorderScan(Scan):
             return False
 
         metadata_builder = MetaDataBuilder(dsp_mount_path=self.full_scan_path)
-        metadata_builder.dada_file_manager = DadaFileManager(folder=metadata_builder.dsp_mount_path)
-        metadata_builder.build_metadata()
-        # this call will write to file self.full_scan_path / "ska-data-product.yaml"
-        metadata_builder.write_metadata()
+        metadata_builder.generate_metadata()
+
         return True
 
     def next_unprocessed_file(
@@ -136,6 +134,7 @@ class VoltageRecorderScan(Scan):
             if min(data_file.age, weights_file.age) >= minimum_age:
                 self.logger.debug(f"data_file={data_file} weights_file={weights_file}")
                 return (data_file, weights_file, stat_file)
+
         return None
 
     def process_file(

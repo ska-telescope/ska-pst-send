@@ -113,10 +113,6 @@ class SdpTransfer:
         scan_transfer.join()
 
         if scan_process.completed and scan_transfer.completed:
-            self.logger.debug(
-                f"scan={local_scan.relative_scan_path} processed={scan_process.completed} "
-                + f"transferred={scan_transfer.completed}"
-            )
             self.logger.info(f"Completed processing and transfer of scan {local_scan.relative_scan_path}")
 
             if self.data_product_dashboard == "disabled":

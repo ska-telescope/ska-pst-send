@@ -80,40 +80,51 @@ class ScanTransfer(threading.Thread):
 
         return sorted(files)
 
-    def run(self: ScanTransfer) -> None:
-        """Run the transfer for the Scan from local to remote."""
-        self.logger.debug("starting transfer thread")
+    def _transfer_files(self: ScanTransfer) -> bool:
         local_path = self.local_scan.data_product_path
         remote_path = self.remote_scan.data_product_path
 
-        while not self.completed:
-            for untransferred_file in self.untransferred_files(self.minimum_age):
-                self.logger.debug(f"untransferred_file={untransferred_file} with age > {self.minimum_age}")
+        for untransferred_file in self.untransferred_files(self.minimum_age):
+            self.logger.debug(f"untransferred_file={untransferred_file} with age > {self.minimum_age}")
 
-                # check for the exit condition, with a small timeout
-                with self.exit_cond:
-                    if self.exit_cond.wait(timeout=0.1):
-                        self.logger.debug("ScanTransfer thread exiting on command")
-                        return
+            # check for the exit condition, with a small timeout
+            with self.exit_cond:
+                if self.exit_cond.wait(timeout=0.1):
+                    self.logger.debug("ScanTransfer thread exiting on command")
+                    return False
 
-                local_file = local_path / untransferred_file.relative_path
-                remote_file = remote_path / untransferred_file.relative_path
-                self.logger.info(f"transferring {untransferred_file.relative_path}")
-                remote_file.parent.mkdir(mode=self.default_dir_perms, parents=True, exist_ok=True)
-                shutil.copyfile(local_file, remote_file)
+            local_file = local_path / untransferred_file.relative_path
+            remote_file = remote_path / untransferred_file.relative_path
+            self.logger.info(f"transferring {untransferred_file.relative_path}")
+            remote_file.parent.mkdir(mode=self.default_dir_perms, parents=True, exist_ok=True)
+            shutil.copyfile(local_file, remote_file)
 
-            # check if the scan is completed and the ScanProcess has generated the data-product-file
-            self.completed = (
-                len(self.untransferred_files(minimum_age=0)) == 0
-                and self.local_scan.is_complete()
-                and self.local_scan.data_product_file_exists()
-            )
+        # check if the scan is completed and the ScanProcess has generated the data-product-file
+        self.completed = (
+            len(self.untransferred_files(minimum_age=0)) == 0
+            and self.local_scan.is_complete()
+            and self.local_scan.data_product_file_exists()
+        )
 
-            # if not yet completed, timeout wait on the exit condition
-            if not self.completed:
-                with self.exit_cond:
-                    if self.exit_cond.wait(timeout=self.loop_wait):
-                        self.logger.debug("ScanTransfer thread exiting on command")
-                        return
+        return True
 
-        self.logger.debug("ScanTransfer thread exiting as transfer complete")
+    def run(self: ScanTransfer) -> None:
+        """Run the transfer for the Scan from local to remote."""
+        self.logger.debug("starting transfer thread")
+
+        try:
+            while not self.completed:
+                # if received exit condition during loop exit out.
+                if not self._transfer_files():
+                    return
+
+                # if not yet completed, timeout wait on the exit condition
+                if not self.completed:
+                    with self.exit_cond:
+                        if self.exit_cond.wait(timeout=self.loop_wait):
+                            self.logger.debug("ScanTransfer thread exiting on command")
+                            return
+
+            self.logger.debug("ScanTransfer thread exiting as transfer complete")
+        except Exception:
+            self.logger.exception("ScanProcess loop received an exception. Exiting loop.", exc_info=True)

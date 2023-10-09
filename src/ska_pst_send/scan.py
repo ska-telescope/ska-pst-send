@@ -34,6 +34,7 @@ class Scan:
         """
         self.data_product_path = data_product_path
         self.relative_scan_path = relative_scan_path
+        (self.eb_id, self.subsystem_id, self.scan_id) = relative_scan_path.parts
         self.full_scan_path = data_product_path / relative_scan_path
         self.logger = logger or logging.getLogger(__name__)
 
@@ -113,3 +114,7 @@ class Scan:
         :rtype pathlib.Path:
         """
         return self._data_product_file
+
+    def __repr__(self: Scan) -> str:
+        """Get string representation of current VoltageRecorderScan."""
+        return f"Scan(eb_id={self.eb_id}, subsystem_id={self.subsystem_id}, scan_id={self.scan_id})"

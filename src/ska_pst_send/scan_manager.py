@@ -18,7 +18,7 @@ __all__ = [
     "ScanManager",
 ]
 
-PST_SUBSYSTEMS = ["pst-low", "pst-mid"]
+PST_SUBSYSTEM_IDS = ["pst-low", "pst-mid"]
 
 
 class ScanManager:
@@ -27,7 +27,7 @@ class ScanManager:
     def __init__(
         self: ScanManager,
         data_product_path: pathlib.Path,
-        subsystem: str,
+        subsystem_id: str,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialise a ScanManager object.
@@ -37,10 +37,10 @@ class ScanManager:
         :param logger: the logger instance to use.
         """
         assert data_product_path.exists() and data_product_path.is_dir()
-        assert subsystem in PST_SUBSYSTEMS
+        assert subsystem_id in PST_SUBSYSTEM_IDS
 
         self.data_product_path = data_product_path
-        self.subsystem = subsystem
+        self.subsystem_id = subsystem_id
         self._scans: List[VoltageRecorderScan] = []
         self.logger = logger or logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class ScanManager:
                 self.logger.debug(f"adding new scan {rel_scan_path}")
                 self._scans.append(VoltageRecorderScan(self.data_product_path, rel_scan_path, self.logger))
 
-        # remove delete scans from the list
+        # remove deleted scans from the list
         for scan in self._scans:
             if scan.relative_scan_path not in self.relative_scan_paths:
                 self.logger.debug(f"removing scan at {str(scan.relative_scan_path)}")

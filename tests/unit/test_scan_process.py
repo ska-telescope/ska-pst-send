@@ -15,6 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import ska_pst_send.voltage_recorder_scan
 from ska_pst_send import ScanProcess, VoltageRecorderFile, VoltageRecorderScan
 
 
@@ -41,10 +42,15 @@ def test_process(
     scan = voltage_recording_scan
     assert len(scan.get_all_files()) == len(scan_files) + 1
 
+    mock_metadata_builder = MagicMock()
+    monkeypatch.setattr(ska_pst_send.voltage_recorder_scan, "MetaDataBuilder", mock_metadata_builder)
+
     def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
         # ensure the file is created
         for sf in stats_files:
-            (scan.full_scan_path / sf).touch()
+            full_sf = scan.full_scan_path / sf
+            full_sf.parent.mkdir(mode=0o777, parents=True, exist_ok=True)
+            full_sf.touch()
 
         completed = MagicMock()
         completed.returncode = 0

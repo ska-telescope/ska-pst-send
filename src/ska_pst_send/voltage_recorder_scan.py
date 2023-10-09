@@ -11,7 +11,8 @@ from __future__ import annotations
 import logging
 import pathlib
 import subprocess
-from typing import Generator, List, Tuple
+import time
+from typing import List, Tuple
 
 from .metadata_builder import MetaDataBuilder
 from .scan import Scan
@@ -68,46 +69,24 @@ class VoltageRecorderScan(Scan):
         if self.scan_config_file_exists():
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
 
-    def generate_data_product_file(self: VoltageRecorderScan) -> bool:
-        """
-        Generate the ska-data-product.yaml file.
-
-        :return: flag indicating the generation is complete
-        :rtype: bool
-        """
+    def generate_data_product_file(self: VoltageRecorderScan) -> None:
+        """Generate the ska-data-product.yaml file."""
         # ensure the scan is marked as completed
-        if not self.is_complete():
-            self.logger.warning("Cannot generate data product file as scan is not marked as completed")
-            return False
-
-        # ensure there are no unprocessed data files
+        assert self.is_complete(), "generate_data_product_file called when scan is not complete"
         unprocessed_file = self.next_unprocessed_file(minimum_age=0)
-        if unprocessed_file is not None:
-            self.logger.warning(
-                f"Cannot generate data product file, unprocessed files exist: {unprocessed_file}"
-            )
-            return False
+        assert (
+            unprocessed_file is None
+        ), f"generate_data_product_file when there are unprocessed files. {unprocessed_file}"
 
         metadata_builder = MetaDataBuilder(dsp_mount_path=self.full_scan_path)
         metadata_builder.generate_metadata()
 
-        return True
-
     def _unprocessed_file_pairs(
         self: VoltageRecorderScan,
-    ) -> Generator[Tuple[VoltageRecorderFile, VoltageRecorderFile], None, None]:
-        for data_file in self._data_files:
-            weights_files = [w for w in self._weights_files if w.file_number == data_file.file_number]
-            assert len(weights_files) in {
-                0,
-                1,
-            }, f"Expected to find none or one weights file for {data_file.file_name}"
-
-            if len(weights_files) == 0:
-                self.logger.warning(f"No matching weights file of data file {data_file.file_name}")
-                continue
-
-            yield (data_file, weights_files[0])
+    ) -> List[Tuple[VoltageRecorderFile, VoltageRecorderFile]]:
+        return [
+            (d, w) for d in self._data_files for w in self._weights_files if d.file_number == w.file_number
+        ]
 
     def next_unprocessed_file(
         self: VoltageRecorderScan,
@@ -129,21 +108,33 @@ class VoltageRecorderScan(Scan):
                 self.full_scan_path / "stat" / f"{data_file.file_name.stem}.h5", self.data_product_path
             )
 
+            # stat file cannot be generated due to a previous processing failure
+            if stat_file.file_name in self._unprocessable_files:
+                self.logger.debug(f"{self} skipping {stat_file.relative_path} as is unprocessable")
+                continue
+
             # if the stat file already exists, then no need to generate
             if stat_file.exists():
                 continue
 
-            # stat file cannot be generated due to a previous processing failure
-            if stat_file.file_name in self._unprocessable_files:
-                self.logger.debug(f"skipping {stat_file.relative_path} as is unprocessable")
-                continue
-
             # input data and weights files must be at least minimum age
             if min(data_file.age, weights_file.age) >= minimum_age:
-                self.logger.debug(f"data_file={data_file} weights_file={weights_file}")
+                self.logger.debug(
+                    f"{self} has unprocessed pair of files. data_file={data_file} weights_file={weights_file}"
+                )
                 return (data_file, weights_file, stat_file)
 
         return None
+
+    def process_next_unprocessed_file(self: VoltageRecorderScan, minimum_age: float = 10.0) -> None:
+        """Process the next unprocessed file if one exists.
+
+        :param minimum_age: minimum allowed age, the number of seconds since last modification
+        :return: True if a file was processed else False
+        """
+        unprocessed_file = self.next_unprocessed_file(minimum_age=minimum_age)
+        if unprocessed_file is not None:
+            self.process_file(unprocessed_file)
 
     def process_file(
         self: VoltageRecorderScan,
@@ -159,6 +150,7 @@ class VoltageRecorderScan(Scan):
         :return: flag indicating proessing was successful
         :rtype: bool
         """
+        self.logger.debug(f"{self} processing {unprocessed_file}")
         (data_file, weights_file, stats_file) = unprocessed_file
 
         stats_file.file_name.parent.mkdir(mode=dir_perms, parents=True, exist_ok=True)
@@ -188,6 +180,8 @@ class VoltageRecorderScan(Scan):
         if not ok:
             self.logger.warning(f"command {command} failed: {completed.returncode}")
             self._unprocessable_files.append(stats_file.file_name)
+
+        self.last_processed_time = time.time_ns()
         return ok
 
     def get_all_files(self: VoltageRecorderScan) -> List[VoltageRecorderFile]:
@@ -199,3 +193,10 @@ class VoltageRecorderScan(Scan):
         """
         self.update_files()
         return [*self._data_files, *self._weights_files, *self._stats_files, *self._config_files]
+
+    def __repr__(self: VoltageRecorderScan) -> str:
+        """Get string representation of current VoltageRecorderScan."""
+        return (
+            f"VoltageRecorderScan(eb_id={self.eb_id}, "
+            f"subsystem_id={self.subsystem_id}, scan_id={self.scan_id})"
+        )

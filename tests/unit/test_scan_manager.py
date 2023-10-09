@@ -41,7 +41,7 @@ def test_oldest_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
     data_product_path = scan_list[0].data_product_path
     scan_manager = ScanManager(data_product_path, subsystem_id)
 
-    oldest = scan_manager.oldest_scan
+    oldest = scan_manager.next_unprocessed_scan()
 
     # for now, rely on the scan_manager to order the _scans attribute correctly
     assert oldest is not None, "Expected oldest scan to not be None"
@@ -67,7 +67,7 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
         scan_manager._scans[0].delete_scan()
 
         # force the scan_manager to detect the deleted scan
-        oldest = scan_manager.oldest_scan
+        oldest = scan_manager.next_unprocessed_scan()
         assert len(scan_manager._scans) == len(scan_list) - (i + 1)
 
         if (i + 1) < len(scan_list):
@@ -81,4 +81,4 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
 
     scan_manager._refresh_scans()
     assert len(scan_manager._scans) == 0
-    assert scan_manager.oldest_scan is None
+    assert scan_manager.next_unprocessed_scan() is None

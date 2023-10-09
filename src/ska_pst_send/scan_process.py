@@ -9,9 +9,7 @@
 from __future__ import annotations
 
 import logging
-import pathlib
 import threading
-from typing import List
 
 from .voltage_recorder_scan import VoltageRecorderScan
 
@@ -48,23 +46,12 @@ class ScanProcess(threading.Thread):
         self.loop_wait = loop_wait
         self.minimum_age = minimum_age
         self.completed = False
-        self.unprocessable_files: List[pathlib.Path] = []
 
-    def _process_next_file(self: ScanProcess) -> None:
-        # get an unprocessed file that is older enough
-        unprocessed_file = self.scan.next_unprocessed_file(minimum_age=self.minimum_age)
-        if unprocessed_file is not None:
-            self.logger.debug(f"processing {unprocessed_file}")
-            ok = self.scan.process_file(unprocessed_file)  # type: ignore
-            self.logger.debug(f"result={ok}")
-            if not ok:
-                self.unprocessable_files.append(unprocessed_file[2].file_name)
-
-        # test if the scan_completed marker exists and there are no unprocessed files of any age
-        if self.scan.is_complete() and self.scan.next_unprocessed_file(minimum_age=0) is None:
-            if not self.scan.data_product_file_exists():
-                self.logger.debug("generating data product YAML file")
-                self.scan.generate_data_product_file()
+    def _handle_scan_potentially_complete(self: ScanProcess) -> None:
+        if not self.scan.next_unprocessed_file(minimum_age=self.minimum_age):
+            self.logger.debug("generating data product YAML file")
+            self.scan.generate_data_product_file()
+            # only mark as completed after generating data product file
             self.completed = True
 
     def run(self: ScanProcess) -> None:
@@ -73,7 +60,10 @@ class ScanProcess(threading.Thread):
 
         try:
             while not self.completed:
-                self._process_next_file()
+                self.scan.process_next_unprocessed_file(minimum_age=self.minimum_age)
+
+                if self.scan.is_complete():
+                    self._handle_scan_potentially_complete()
 
                 # if not yet completed, conditional wait on exit condition variable
                 if not self.completed:
@@ -82,6 +72,8 @@ class ScanProcess(threading.Thread):
                             self.logger.debug("ScanProcess thread exiting on command")
                             return
 
-            self.logger.debug("ScanProcess thread exiting as processing is complete")
+            self.logger.info(
+                f"ScanProcess thread exiting as processing for scan {self.scan.scan_id} complete"
+            )
         except Exception:
             self.logger.exception("ScanProcess loop received an exception. Exiting loop.", exc_info=True)

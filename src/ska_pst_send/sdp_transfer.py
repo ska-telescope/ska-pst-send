@@ -128,9 +128,8 @@ class SdpTransfer:
 
         self._persist = True
         while self._persist:
-
-            # get the oldest available scan
-            local_scan = scan_manager.oldest_scan
+            # get next scan to process
+            local_scan = scan_manager.next_unprocessed_scan()
 
             if local_scan is not None:
                 self._proccess_voltage_recorder_scan(local_scan)

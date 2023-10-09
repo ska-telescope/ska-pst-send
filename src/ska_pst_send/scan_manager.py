@@ -77,15 +77,17 @@ class ScanManager:
         """
         Return a list of the current full scan paths stored in the data_product_path.
 
+        The expected path of scans are <eb_id>/<subsystem_id>/<scan_id> where eb_id
+        is the execution block id.
+
         :return: the list of full scan paths.
         :rtype: List[pathlib.Path].
         """
-        return list(self.data_product_path.glob(f"*/{self.subsystem}/*"))
+        return [p for p in self.data_product_path.glob(f"eb-*/{self.subsystem_id}/*") if p.is_dir()]
 
-    @property
-    def oldest_scan(self: ScanManager) -> VoltageRecorderScan | None:
+    def next_unprocessed_scan(self: ScanManager) -> VoltageRecorderScan | None:
         """
-        Return the oldest scan stored in the data_product_path.
+        Return the next unprocessed scan stored in the data_product_path.
 
         :return: the older scan currently stored in the data product path, or None if empty
         :rtype: VoltageRecorderScan | None
@@ -95,4 +97,5 @@ class ScanManager:
         # TODO work out oldest scan, for now return first scan in list
         if len(self._scans) > 0:
             return self._scans[0]
+
         return None

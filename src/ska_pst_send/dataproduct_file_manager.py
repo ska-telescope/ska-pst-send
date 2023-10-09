@@ -90,9 +90,10 @@ class DadaFileReader:
         logger: logging.Logger | None = None,
     ) -> None:
         """Create instance of file reader."""
-        assert (
-            file.exists() and file.is_file()
-        ), f"Expected {file} to exist and be a file: exists={file.exists()}, is_file={file.is_file()}"
+        assert file.exists() and file.is_file(), (
+            f"Expected {file} to exist and be a file: exists={file.exists()}, "
+            f"is_file={file.is_file()}. file.is_dir{file.is_dir()}"
+        )
         self.file = file
         self.header_size = DEFAULT_HEADER_SIZE
         self._header: Dict[str, str] = {}

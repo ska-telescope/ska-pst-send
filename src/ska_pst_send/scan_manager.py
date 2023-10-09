@@ -11,6 +11,7 @@ from __future__ import annotations
 import functools
 import logging
 import pathlib
+import time
 from typing import List
 
 from .voltage_recorder_scan import VoltageRecorderScan
@@ -29,12 +30,15 @@ class ScanManager:
         self: ScanManager,
         data_product_path: pathlib.Path,
         subsystem_id: str,
+        scan_timeout: float = 300,
         logger: logging.Logger | None = None,
     ) -> None:
         """Initialise a ScanManager object.
 
-        :param data_product_path: absolute file system path to the data product directory
-        :param subsystem: the PST instance, one of pst-low or pst-mid
+        :param data_product_path: absolute file system path to the data product directory.
+        :param subsystem: the PST instance, one of pst-low or pst-mid.
+        :param scan_timeout: the timeout, in seconds, for a scan to not have updated before
+            future processing of it is stopped.
         :param logger: the logger instance to use.
         """
         assert data_product_path.exists() and data_product_path.is_dir()
@@ -43,6 +47,8 @@ class ScanManager:
         self.data_product_path = data_product_path
         self.subsystem_id = subsystem_id
         self._scans: List[VoltageRecorderScan] = []
+        self._active_scans: List[VoltageRecorderScan] = []
+        self._scan_timeout = scan_timeout
         self.logger = logger or logging.getLogger(__name__)
 
         # initialise the list of scans
@@ -62,6 +68,10 @@ class ScanManager:
             if scan.relative_scan_path not in self.relative_scan_paths:
                 self.logger.debug(f"removing scan at {str(scan.relative_scan_path)}")
                 self._scans.remove(scan)
+
+        # sort the scans by the last processing time
+        # ideally there should only be 1 scan to process but
+        self._scans.sort(key=functools.cmp_to_key(VoltageRecorderScan.compare_modified))
 
     @property
     def relative_scan_paths(self: ScanManager) -> List[pathlib.Path]:
@@ -86,6 +96,12 @@ class ScanManager:
         """
         return [p for p in self.data_product_path.glob(f"eb-*/{self.subsystem_id}/*") if p.is_dir()]
 
+    @property
+    def active_scans(self: ScanManager) -> List[VoltageRecorderScan]:
+        """Get scans that have been updated within the last scan_timeout."""
+        last_active_modified_time = time.time() - self._scan_timeout
+        return [s for s in self._scans if s.modified_time_secs >= last_active_modified_time]
+
     def next_unprocessed_scan(self: ScanManager) -> VoltageRecorderScan | None:
         """
         Return the next unprocessed scan stored in the data_product_path.
@@ -94,11 +110,13 @@ class ScanManager:
         :rtype: VoltageRecorderScan | None
         """
         self._refresh_scans()
+        active_scans = self.active_scans
+        if len(active_scans) > 0:
+            return active_scans[0]
 
-        # sort the scans by the last processing time
-        # ideally there should only be 1 scan to process but
-        self._scans.sort(key=functools.cmp_to_key(VoltageRecorderScan.compare_modified))
         if len(self._scans) > 0:
-            return self._scans[0]
+            scan = self._scans[0]
+            self.logger.info(f"No active scan found but an inactive scan {scan} found.")
+            return scan
 
         return None

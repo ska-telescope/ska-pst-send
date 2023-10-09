@@ -22,6 +22,8 @@ __all__ = [
     "VoltageRecorderScan",
 ]
 
+NANOSECONDS_PER_SEC = 1e9
+
 
 class VoltageRecorderScan(Scan):
     """Class representing PST Voltage Recoder Data Products for a Scan."""
@@ -45,12 +47,22 @@ class VoltageRecorderScan(Scan):
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
         self._unprocessable_files: List[pathlib.Path] = []
-        self.created_time: int = time.time_ns()
-        self.modified_time: int = self.created_time
+        self._created_time_ns: int = time.time_ns()
+        self._modified_time_ns: int = self._created_time_ns
+
+    @property
+    def modified_time_secs(self: VoltageRecorderScan) -> float:
+        """Get last modified time in seconds."""
+        return self._modified_time_ns / NANOSECONDS_PER_SEC
 
     def update_modified_time(self: VoltageRecorderScan) -> None:
         """Update the last time the scan was processed."""
-        self.modified_time = time.time_ns()
+        self._modified_time_ns = time.time_ns()
+
+    @property
+    def age(self: VoltageRecorderScan) -> float:
+        """Get the age of the scan, in seconds."""
+        return time.time() - self._created_time_ns / NANOSECONDS_PER_SEC
 
     def update_files(self: VoltageRecorderScan) -> None:
         """Check the file system for new data, weights and stats files."""
@@ -231,7 +243,7 @@ class VoltageRecorderScan(Scan):
                 return 1
             return 0
 
-        for attr_name in ["modified_time", "creation_time", "scan_id", "eb_id"]:
+        for attr_name in ["_modified_time_ns", "_created_time_ns", "scan_id", "eb_id"]:
             first_attr = getattr(first, attr_name)
             second_attr = getattr(second, attr_name)
 

@@ -35,6 +35,7 @@ class SdpTransfer:
         remote_path: pathlib.Path,
         ska_subsystem: str,
         data_product_dashboard: str,
+        scan_timeout: float,
         verbose: bool = False,
     ) -> None:
         """
@@ -51,6 +52,7 @@ class SdpTransfer:
         self.remote_path = remote_path
         self.ska_subsystem = ska_subsystem
         self.data_product_dashboard = data_product_dashboard
+        self.scan_timeout = scan_timeout
         if self.data_product_dashboard != "disabled":
             self._dpd_api_client = DpdApiClient(endpoint=self.data_product_dashboard)
 
@@ -126,7 +128,9 @@ class SdpTransfer:
     def process(self: SdpTransfer) -> None:
         """Primary processing method for the PST to SDP transfer."""
         self.logger.debug(f"local_path={self.local_path} remote_path={self.remote_path}")
-        scan_manager = ScanManager(self.local_path, self.ska_subsystem, self.logger)
+        scan_manager = ScanManager(
+            self.local_path, self.ska_subsystem, scan_timeout=self.scan_timeout, logger=self.logger
+        )
 
         self._persist = True
         while self._persist:
@@ -172,6 +176,12 @@ def main() -> None:
         type=str,
         default="disabled",
         help="endpoint for the SDP Data Product Dashboard REST API [e.g. http://127.0.0.1:8888]",
+    )
+    p.add_argument(
+        "--scan-timeout",
+        type=float,
+        help="time out, in seconds, to mark scan as being inactive. Default is 300s",
+        default=300.0,
     )
     p.add_argument("-v", "--verbose", action="store_true")
 

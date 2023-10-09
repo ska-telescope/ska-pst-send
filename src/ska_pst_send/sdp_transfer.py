@@ -121,6 +121,8 @@ class SdpTransfer:
             else:
                 self._ensure_scan_indexed_in_dpd(local_scan=local_scan, remote_scan=remote_scan)
 
+        local_scan.update_modified_time()
+
     def process(self: SdpTransfer) -> None:
         """Primary processing method for the PST to SDP transfer."""
         self.logger.debug(f"local_path={self.local_path} remote_path={self.remote_path}")

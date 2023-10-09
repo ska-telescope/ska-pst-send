@@ -8,6 +8,7 @@
 """Module class for managing scans of recorded by the PST AA0.5 Voltage Recorder."""
 from __future__ import annotations
 
+import functools
 import logging
 import pathlib
 from typing import List
@@ -94,7 +95,9 @@ class ScanManager:
         """
         self._refresh_scans()
 
-        # TODO work out oldest scan, for now return first scan in list
+        # sort the scans by the last processing time
+        # ideally there should only be 1 scan to process but
+        self._scans.sort(key=functools.cmp_to_key(VoltageRecorderScan.compare_modified))
         if len(self._scans) > 0:
             return self._scans[0]
 

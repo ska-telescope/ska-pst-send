@@ -98,6 +98,7 @@ class ScanTransfer(threading.Thread):
             self.logger.info(f"transferring {untransferred_file.relative_path}")
             remote_file.parent.mkdir(mode=self.default_dir_perms, parents=True, exist_ok=True)
             shutil.copyfile(local_file, remote_file)
+            self.local_scan.update_modified_time()
 
         # check if the scan is completed and the ScanProcess has generated the data-product-file
         self.completed = (

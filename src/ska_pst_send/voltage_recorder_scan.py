@@ -12,7 +12,7 @@ import logging
 import pathlib
 import subprocess
 import time
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from .metadata_builder import MetaDataBuilder
 from .scan import Scan
@@ -45,6 +45,12 @@ class VoltageRecorderScan(Scan):
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
         self._unprocessable_files: List[pathlib.Path] = []
+        self.created_time: int = time.time_ns()
+        self.modified_time: int = self.created_time
+
+    def update_modified_time(self: VoltageRecorderScan) -> None:
+        """Update the last time the scan was processed."""
+        self.modified_time = time.time_ns()
 
     def update_files(self: VoltageRecorderScan) -> None:
         """Check the file system for new data, weights and stats files."""
@@ -181,7 +187,7 @@ class VoltageRecorderScan(Scan):
             self.logger.warning(f"command {command} failed: {completed.returncode}")
             self._unprocessable_files.append(stats_file.file_name)
 
-        self.last_processed_time = time.time_ns()
+        self.update_modified_time()
         return ok
 
     def get_all_files(self: VoltageRecorderScan) -> List[VoltageRecorderFile]:
@@ -200,3 +206,37 @@ class VoltageRecorderScan(Scan):
             f"VoltageRecorderScan(eb_id={self.eb_id}, "
             f"subsystem_id={self.subsystem_id}, scan_id={self.scan_id})"
         )
+
+    @staticmethod
+    def compare_modified(first: VoltageRecorderScan, second: VoltageRecorderScan) -> int:
+        """Compare two scan objects by modified time to allow for sorting.
+
+        This implementation compares 2 scans by modified time, creation time, scan id and
+        finally eb id. The scan that was modified the least recently will be ordered before
+        scans modified more recently. Comparison by creation time, scan id and eb-id are
+        to break ties.
+
+        As the modified time can be updated on scans the use of this comparator is should
+        not be used to sort dictionaries.
+
+        :param first: in the A < B comparison, this parameter is A
+        :param second: in the A < B comparison, this parameter is B
+        """
+        # used to reduce complexity of function as each attributed would do
+        # the same thing.
+        def _cmp(first_attr: Any, second_attr: Any) -> int:
+            if first_attr < second_attr:
+                return -1
+            if first_attr > second_attr:
+                return 1
+            return 0
+
+        for attr_name in ["modified_time", "creation_time", "scan_id", "eb_id"]:
+            first_attr = getattr(first, attr_name)
+            second_attr = getattr(second, attr_name)
+
+            comp = _cmp(first_attr, second_attr)
+            if comp != 0:
+                return comp
+
+        return 0

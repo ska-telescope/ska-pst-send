@@ -93,6 +93,22 @@ class VoltageRecorderScan(Scan):
 
         return True
 
+    def _unprocessed_file_pairs(
+        self: VoltageRecorderScan,
+    ) -> Generator[Tuple[VoltageRecorderFile, VoltageRecorderFile], None, None]:
+        for data_file in self._data_files:
+            weights_files = [w for w in self._weights_files if w.file_number == data_file.file_number]
+            assert len(weights_files) in {
+                0,
+                1,
+            }, f"Expected to find none or one weights file for {data_file.file_name}"
+
+            if len(weights_files) == 0:
+                self.logger.warning(f"No matching weights file of data file {data_file.file_name}")
+                continue
+
+            yield (data_file, weights_files[0])
+
     def next_unprocessed_file(
         self: VoltageRecorderScan,
         minimum_age: float = 10,
@@ -107,15 +123,7 @@ class VoltageRecorderScan(Scan):
         self.update_files()
 
         # combine the data and weights files into a enumerated tuple and iterate
-        for (data_file, weights_file) in zip(self._data_files, self._weights_files):
-
-            if data_file.file_number != weights_file.file_number:
-                self.logger.warning(
-                    f"File number mismatch data_file={data_file.file_number} "
-                    f"weights_file={weights_file.file_number}"
-                )
-                continue
-
+        for (data_file, weights_file) in self._unprocessed_file_pairs():
             # the stat file that should exist
             stat_file = VoltageRecorderFile(
                 self.full_scan_path / "stat" / f"{data_file.file_name.stem}.h5", self.data_product_path

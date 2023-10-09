@@ -37,7 +37,7 @@ class Scan:
         self.full_scan_path = data_product_path / relative_scan_path
         self.logger = logger or logging.getLogger(__name__)
 
-        assert self.data_product_path.exists() and self.data_product_path.is_dir()
+        assert self.full_scan_path.exists() and self.full_scan_path.is_dir()
 
         self._scan_config_file = self.full_scan_path / "scan_configuration.json"
         self._data_product_file = self.full_scan_path / "ska-data-product.yaml"

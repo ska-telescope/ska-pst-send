@@ -112,7 +112,7 @@ class ScanTransfer(threading.Thread):
 
     def run(self: ScanTransfer) -> None:
         """Run the transfer for the Scan from local to remote."""
-        self.logger.debug("starting transfer thread")
+        self.logger.debug(f"{self} starting transfer thread")
 
         try:
             while not self.completed and not self.local_scan.processing_failed:

@@ -102,6 +102,10 @@ class SdpTransfer:
         # construct a remote scan object for comparison
         remote_scan = VoltageRecorderScan(self.remote_path, local_scan.relative_scan_path, logger=self.logger)
 
+        # reset processing and transfer states needs to be done before threads are started
+        local_scan.processing_failed = False
+        local_scan.transfer_failed = False
+
         # perform post-processing on the scan to generate output files for transfer
         scan_process = ScanProcess(local_scan, self._cond, logger=self.logger)
         scan_process.start()

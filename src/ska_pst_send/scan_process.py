@@ -60,7 +60,7 @@ class ScanProcess(threading.Thread):
 
     def run(self: ScanProcess) -> None:
         """Perform processing of scan files."""
-        self.logger.debug("starting scan processing thread")
+        self.logger.debug(f"{self} starting scan processing thread")
 
         try:
             while not self.completed and not self.scan.transfer_failed:

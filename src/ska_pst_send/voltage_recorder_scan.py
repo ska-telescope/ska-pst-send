@@ -47,8 +47,16 @@ class VoltageRecorderScan(Scan):
         self._stats_files: List[VoltageRecorderFile] = []
         self._config_files: List[VoltageRecorderFile] = []
         self._unprocessable_files: List[pathlib.Path] = []
-        self._created_time_ns: int = time.time_ns()
-        self._modified_time_ns: int = self._created_time_ns
+
+        # create time of scan is creation time of scan directory
+        created_time_ns = self.full_scan_path.stat().st_ctime_ns
+        self._created_time_ns: int = created_time_ns
+        self._modified_time_ns: int = created_time_ns
+
+        # state variables for processing and transferring
+        self.processing_failed = False
+        self.transfer_failed = False
+        self.update_files()
 
     @property
     def modified_time_secs(self: VoltageRecorderScan) -> float:

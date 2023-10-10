@@ -63,7 +63,7 @@ class ScanProcess(threading.Thread):
         self.logger.debug("starting scan processing thread")
 
         try:
-            while not self.completed:
+            while not self.completed and not self.scan.transfer_failed:
                 self.scan.process_next_unprocessed_file(minimum_age=self.minimum_age)
                 self._handle_scan_potentially_complete()
 
@@ -74,8 +74,14 @@ class ScanProcess(threading.Thread):
                             self.logger.debug("ScanProcess thread exiting on command")
                             return
 
-            self.logger.info(
-                f"ScanProcess thread exiting as processing for scan {self.scan.scan_id} complete"
-            )
+            if self.completed:
+                self.logger.info(f"{self} thread exiting as processing is complete")
+            elif self.scan.transfer_failed:
+                self.logger.info(f"{self} thread exiting due to the transfer thread failing")
         except Exception:
-            self.logger.exception("ScanProcess loop received an exception. Exiting loop.", exc_info=True)
+            self.logger.exception(f"{self} thread received an exception. Exiting loop.", exc_info=True)
+            self.scan.processing_failed = True
+
+    def __repr__(self: ScanProcess) -> str:
+        """Get string representation for scan process."""
+        return f"ScanProcess(scan_id={self.scan.scan_id})"

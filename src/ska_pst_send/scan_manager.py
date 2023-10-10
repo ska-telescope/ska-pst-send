@@ -47,7 +47,6 @@ class ScanManager:
         self.data_product_path = data_product_path
         self.subsystem_id = subsystem_id
         self._scans: List[VoltageRecorderScan] = []
-        self._active_scans: List[VoltageRecorderScan] = []
         self._scan_timeout = scan_timeout
         self.logger = logger or logging.getLogger(__name__)
 

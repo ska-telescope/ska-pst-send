@@ -46,7 +46,9 @@ def remove_send_tempdir() -> None:
 @pytest.fixture
 def logger() -> logging.Logger:
     """Get logger to use for logging within tests."""
-    return logging.getLogger(__name__)
+    logger = logging.getLogger("TESTLOGGER")
+    logger.setLevel(logging.DEBUG)
+    return logger
 
 
 @pytest.fixture

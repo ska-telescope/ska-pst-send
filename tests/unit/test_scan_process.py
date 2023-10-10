@@ -102,12 +102,14 @@ def test_process(
         assert stat_file_path.exists()
 
 
-def test_aborted_transfer(
+def test_abort_process(
     voltage_recording_scan: VoltageRecorderScan,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test that the ScanProcess thread can be aborted via the threading.Condition variable."""
     scan = voltage_recording_scan
+    assert not scan.transfer_failed, "expected scan's transfer_failed to be False"
+    assert not scan.processing_failed, "expected scan's processing_failed to be False"
     cond = threading.Condition()
 
     def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
@@ -134,3 +136,69 @@ def test_aborted_transfer(
 
     assert scan_process.is_alive() is False
     assert scan_process.completed is False
+    assert not scan.transfer_failed, "expected scan's transfer_failed to be False"
+    assert not scan.processing_failed, "expected scan's processing_failed to be False"
+
+
+def test_run_exits_if_transfer_fails(
+    voltage_recording_scan: VoltageRecorderScan,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that ScanProcess.run exits if the scan transfer fails."""
+    scan = voltage_recording_scan
+    assert not scan.transfer_failed, "expected scan's transfer_failed to be False"
+    assert not scan.processing_failed, "expected scan's processing_failed to be False"
+    cond = threading.Condition()
+
+    def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+        # ensure the file is created
+        completed = MagicMock()
+        completed.returncode = 0
+        return completed
+
+    mocked_cmd = MagicMock(side_effect=_process_side_effect)
+    monkeypatch.setattr(subprocess, "run", mocked_cmd)
+
+    scan_process = ScanProcess(scan, cond, loop_wait=0.1)
+    scan_process.start()
+    assert scan_process.is_alive()
+
+    time.sleep(0.1)
+    scan.transfer_failed = True
+
+    # wait for 2 x loop_wait for the process to exit
+    time.sleep(scan_process.loop_wait)
+    scan_process.join()
+
+    assert scan_process.is_alive() is False
+    assert scan_process.completed is False
+    assert scan.transfer_failed, "expected scan's transfer_failed to be True"
+    assert not scan.processing_failed, "expected scan's processing_failed to be False"
+
+
+def test_run_exits_if_exception_thrown(
+    voltage_recording_scan: VoltageRecorderScan,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Test that ScanProcess.run exits if the scan transfer fails."""
+    scan = voltage_recording_scan
+    assert not scan.transfer_failed, "expected scan's transfer_failed to be False"
+    assert not scan.processing_failed, "expected scan's processing_failed to be False"
+    cond = threading.Condition()
+
+    def _process_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+        # ensure the file is created
+        raise Exception("process error")
+
+    mocked_cmd = MagicMock(side_effect=_process_side_effect)
+    monkeypatch.setattr(voltage_recording_scan, "process_next_unprocessed_file", mocked_cmd)
+
+    scan_process = ScanProcess(scan, cond, loop_wait=0.1)
+    scan_process.start()
+
+    scan_process.join()
+
+    assert scan_process.is_alive() is False
+    assert scan_process.completed is False
+    assert not scan.transfer_failed, "expected scan's transfer_failed to be False"
+    assert scan.processing_failed, "expected scan's processing_failed to be True"

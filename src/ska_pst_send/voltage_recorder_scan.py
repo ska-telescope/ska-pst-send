@@ -71,11 +71,6 @@ class VoltageRecorderScan(Scan):
         )
         self._modified_time_ns = curr_time_ns
 
-    @property
-    def age(self: VoltageRecorderScan) -> float:
-        """Get the age of the scan, in seconds."""
-        return time.time() - self._created_time_ns / NANOSECONDS_PER_SEC
-
     def update_files(self: VoltageRecorderScan) -> None:
         """Check the file system for new data, weights and stats files."""
         self._data_files = [

@@ -53,21 +53,17 @@ class Scan:
 
         # then move up the directory tree to the data_product path, pruning directory if empty
         to_prune = self.full_scan_path.parent
-        while True:
+        while to_prune.is_relative_to(self.data_product_path):
+            delta = to_prune.relative_to(self.data_product_path)
+            if delta == pathlib.Path("."):
+                self.logger.debug("pruned scan_path: stopping prune")
+                return
             try:
-                delta = to_prune.relative_to(self.data_product_path)
-                if delta == pathlib.Path("."):
-                    self.logger.debug("pruned scan_path: stopping prune")
-                    return
-                try:
-                    # remove the directory, if it is empty
-                    to_prune.rmdir()
-                    to_prune = to_prune.parent
-                except OSError as exc:
-                    self.logger.debug(f"found non-empty parent directory, stopping prune: {exc}")
-                    return
-            except ValueError as exc:
-                self.logger.debug(f"walked above data_product_path, stopping prune: {exc}")
+                # remove the directory, if it is empty
+                to_prune.rmdir()
+                to_prune = to_prune.parent
+            except OSError as exc:
+                self.logger.debug(f"found non-empty parent directory, stopping prune: {exc}")
                 return
 
     def is_recording(self: Scan) -> bool:

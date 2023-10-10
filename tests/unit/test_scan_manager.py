@@ -127,7 +127,7 @@ def test_next_unprocessed_scan_gets_only_active_scans_if_multiple_scans(
 
     # setup a modified time earlier than active modified time
     # this sets up 2 inactive scans
-    for (idx, s) in enumerate(scan_list[:-2]):
+    for (idx, s) in enumerate(scan_list[:-1]):
         s._modified_time_ns = now_ns - (idx + 2) * scan_timeout_ns
 
     expected_scan = scan_list[-1]

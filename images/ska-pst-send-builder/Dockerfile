@@ -35,6 +35,19 @@ RUN stat ${PKG_CLI_PAYLOAD} \
 WORKDIR /usr/local
 COPY --from=stat-runtime /usr/local/bin/ska_pst_stat* ./bin/
 COPY --from=stat-runtime /usr/local/lib/libska_pst*.so ./lib/
+COPY --from=stat-runtime /usr/local/lib/libpsr*.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libprotobuf*.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libgrpc*.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libabsl*.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libaddress_sorting.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libcrypto.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libgpr.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libre2.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libssl.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libupb.so* ./lib/
+COPY --from=stat-runtime /usr/local/lib/libz.so* ./lib/
+
+RUN ldconfig
 
 RUN ska_pst_stat_file_proc -h \
     && ska_pst_stat_info -h
@@ -43,7 +56,7 @@ WORKDIR /app
 
 # Install poetry as a binary
 ENV POETRY_HOME=/opt/poetry
-ARG POETRY_VERSION="1.2.2"
+ARG POETRY_VERSION="1.3.2"
 
 # Intermittent sSL connection error encountered
 # RUN curl -sSL https://install.python-poetry.org | python3 - --yes

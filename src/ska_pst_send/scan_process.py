@@ -48,8 +48,12 @@ class ScanProcess(threading.Thread):
         self.completed = False
 
     def _handle_scan_potentially_complete(self: ScanProcess) -> None:
-        if not self.scan.next_unprocessed_file(minimum_age=self.minimum_age):
-            self.logger.debug("generating data product YAML file")
+        self.logger.debug(f"checking if scan {self.scan.scan_id} is actually complete.")
+        if self.scan.is_complete() and self.scan.next_unprocessed_file(minimum_age=0) is None:
+            self.logger.debug(
+                f"scan {self.scan.scan_id} has all files processed and has received scan_complete file"
+            )
+            self.logger.debug(f"generating data product YAML file for scan {self.scan.scan_id}")
             self.scan.generate_data_product_file()
             # only mark as completed after generating data product file
             self.completed = True
@@ -61,9 +65,7 @@ class ScanProcess(threading.Thread):
         try:
             while not self.completed:
                 self.scan.process_next_unprocessed_file(minimum_age=self.minimum_age)
-
-                if self.scan.is_complete():
-                    self._handle_scan_potentially_complete()
+                self._handle_scan_potentially_complete()
 
                 # if not yet completed, conditional wait on exit condition variable
                 if not self.completed:

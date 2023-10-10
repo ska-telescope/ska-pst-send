@@ -57,7 +57,11 @@ class VoltageRecorderScan(Scan):
 
     def update_modified_time(self: VoltageRecorderScan) -> None:
         """Update the last time the scan was processed."""
-        self._modified_time_ns = time.time_ns()
+        curr_time_ns = time.time_ns()
+        self.logger.debug(
+            f"updating modified time for scan {self.scan_id} to {curr_time_ns / NANOSECONDS_PER_SEC}"
+        )
+        self._modified_time_ns = curr_time_ns
 
     @property
     def age(self: VoltageRecorderScan) -> float:
@@ -86,6 +90,24 @@ class VoltageRecorderScan(Scan):
             self._config_files.append(VoltageRecorderFile(self._data_product_file, self.data_product_path))
         if self.scan_config_file_exists():
             self._config_files.append(VoltageRecorderFile(self._scan_config_file, self.data_product_path))
+
+        def _update_last_modified_time(files: List[VoltageRecorderFile]) -> None:
+            for f in files:
+                file_modified_time_ns = f.file_name.stat().st_mtime_ns
+                if file_modified_time_ns > self._modified_time_ns:
+                    self.logger.debug(
+                        f"file {f} has modified file more recent that scan's modified time. "
+                        f"Updating scan's modified time to {file_modified_time_ns / NANOSECONDS_PER_SEC}"
+                    )
+                    self._modified_time_ns = file_modified_time_ns
+
+        for files in [
+            self._data_files,
+            self._weights_files,
+            self._stats_files,
+            self._config_files,
+        ]:
+            _update_last_modified_time(files)
 
     def generate_data_product_file(self: VoltageRecorderScan) -> None:
         """Generate the ska-data-product.yaml file."""
@@ -128,7 +150,9 @@ class VoltageRecorderScan(Scan):
 
             # stat file cannot be generated due to a previous processing failure
             if stat_file.file_name in self._unprocessable_files:
-                self.logger.debug(f"{self} skipping {stat_file.relative_path} as is unprocessable")
+                self.logger.debug(
+                    f"{self} skipping {stat_file.relative_path} as it has been marked as unprocessable"
+                )
                 continue
 
             # if the stat file already exists, then no need to generate
@@ -150,7 +174,9 @@ class VoltageRecorderScan(Scan):
         :param minimum_age: minimum allowed age, the number of seconds since last modification
         :return: True if a file was processed else False
         """
+        self.logger.debug(f"Trying to find next unprocessed file with minimum age of {minimum_age}")
         unprocessed_file = self.next_unprocessed_file(minimum_age=minimum_age)
+        self.logger.debug(f"unprocessed_file={unprocessed_file}")
         if unprocessed_file is not None:
             self.process_file(unprocessed_file)
 
@@ -171,6 +197,7 @@ class VoltageRecorderScan(Scan):
         self.logger.debug(f"{self} processing {unprocessed_file}")
         (data_file, weights_file, stats_file) = unprocessed_file
 
+        self.logger.debug(f"ensuring {stats_file.file_name.parent} exists")
         stats_file.file_name.parent.mkdir(mode=dir_perms, parents=True, exist_ok=True)
 
         # actual command to execute when the container is setup
@@ -197,6 +224,7 @@ class VoltageRecorderScan(Scan):
         ok = completed.returncode == 0
         if not ok:
             self.logger.warning(f"command {command} failed: {completed.returncode}")
+            self.logger.debug(f"marking {stats_file.file_name} as unprocessable file")
             self._unprocessable_files.append(stats_file.file_name)
 
         self.update_modified_time()

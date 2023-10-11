@@ -99,7 +99,7 @@ class VoltageRecorderScan(Scan):
                 file_modified_time_ns = f.file_name.stat().st_mtime_ns
                 if file_modified_time_ns > self._modified_time_ns:
                     self.logger.debug(
-                        f"file {f} has modified file more recent that scan's modified time. "
+                        f"file {f} has modified file more recent than scan's modified time. "
                         f"Updating scan's modified time to {file_modified_time_ns / NANOSECONDS_PER_SEC}"
                     )
                     self._modified_time_ns = file_modified_time_ns
@@ -119,12 +119,12 @@ class VoltageRecorderScan(Scan):
         unprocessed_file = self.next_unprocessed_file(minimum_age=0)
         assert (
             unprocessed_file is None
-        ), f"generate_data_product_file when there are unprocessed files. {unprocessed_file}"
+        ), f"generate_data_product_file called when there are unprocessed files. {unprocessed_file}"
 
         metadata_builder = MetaDataBuilder(dsp_mount_path=self.full_scan_path)
         metadata_builder.generate_metadata()
 
-    def _unprocessed_file_pairs(
+    def _data_and_weights_file_pairs(
         self: VoltageRecorderScan,
     ) -> List[Tuple[VoltageRecorderFile, VoltageRecorderFile]]:
         return [
@@ -145,7 +145,7 @@ class VoltageRecorderScan(Scan):
         self.update_files()
 
         # combine the data and weights files into a enumerated tuple and iterate
-        for (data_file, weights_file) in self._unprocessed_file_pairs():
+        for (data_file, weights_file) in self._data_and_weights_file_pairs():
             # the stat file that should exist
             stat_file = VoltageRecorderFile(
                 self.full_scan_path / "stat" / f"{data_file.file_name.stem}.h5", self.data_product_path

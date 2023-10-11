@@ -27,7 +27,7 @@ TEST_DATA_DIR = "sendtest"
 def create_scan(product: pathlib.Path, scan: pathlib.Path) -> Scan:
     """Return a Scan and associated directory structure."""
     full_path = product / scan
-    full_path.mkdir(mode=0o777, parents=True)
+    full_path.mkdir(mode=0o777, parents=True, exist_ok=True)
     return Scan(product, scan)
 
 
@@ -46,15 +46,16 @@ def remove_send_tempdir() -> None:
 @pytest.fixture
 def logger() -> logging.Logger:
     """Get logger to use for logging within tests."""
-    return logging.getLogger(__name__)
+    logger = logging.getLogger("TESTLOGGER")
+    logger.setLevel(logging.DEBUG)
+    return logger
 
 
 @pytest.fixture
 def send_tempdir() -> pathlib.Path:
     """Return a path to the test data dir, under which files can be created."""
     send_tempdir = pathlib.Path(tempfile.gettempdir()) / TEST_DATA_DIR
-    if not send_tempdir.exists():
-        send_tempdir.mkdir(mode=0o777, parents=True, exist_ok=True)
+    send_tempdir.mkdir(mode=0o777, parents=True, exist_ok=True)
 
     return send_tempdir
 
@@ -191,7 +192,7 @@ def voltage_recording_scan(
     scan._scan_config_file.touch()
     for scan_file in scan_files:
         full_scan_file_path = scan.full_scan_path / scan_file
-        full_scan_file_path.mkdir(mode=0o777, parents=True, exist_ok=True)
+        full_scan_file_path.parent.mkdir(mode=0o777, parents=True, exist_ok=True)
         full_scan_file_path.touch(mode=0o777)
 
     yield scan
@@ -209,7 +210,7 @@ def voltage_recording_scan_factory(
         scan._scan_config_file.touch()
         for scan_file in scan_files:
             full_scan_file_path = scan.full_scan_path / scan_file
-            full_scan_file_path.mkdir(mode=0o777, parents=True, exist_ok=True)
+            full_scan_file_path.parent.mkdir(mode=0o777, parents=True, exist_ok=True)
             full_scan_file_path.touch(mode=0o777)
         return scan
 

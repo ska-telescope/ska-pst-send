@@ -81,9 +81,6 @@ def test_metadata_exists_called_with_correct_search_value(
     monkeypatch.setattr(ScanTransfer, "run", lambda: None)
     monkeypatch.setattr(ScanProcess, "run", lambda: None)
 
-    def _true(self: Any) -> bool:
-        return True
-
     mock_scan_process = MagicMock()
     mock_scan_process.completed = True
     monkeypatch.setattr("ska_pst_send.sdp_transfer.ScanProcess", mock_scan_process)
@@ -92,11 +89,13 @@ def test_metadata_exists_called_with_correct_search_value(
     mock_scan_transfer.completed = True
     monkeypatch.setattr("ska_pst_send.sdp_transfer.ScanTransfer", mock_scan_transfer)
 
-    expected_search_value = "foobar"
-    data_product_file = remote_path / expected_search_value
+    local_scan.data_product_file.touch()
+    remote_scan.data_product_file.touch()
+    data_product_file = remote_scan.data_product_file
+
     logger.info(f"data_product_file={data_product_file}")
     mock_voltage_recorder_scan = MagicMock()
-    mock_voltage_recorder_scan.data_product_file_exists = True
+    mock_voltage_recorder_scan.data_product_file_exists.return_value = True
     mock_voltage_recorder_scan.data_product_file = data_product_file
     logger.info(
         f"mock_voltage_recorder_scan.data_product_file={mock_voltage_recorder_scan.data_product_file}"
@@ -115,9 +114,10 @@ def test_metadata_exists_called_with_correct_search_value(
     t.start()
     sdp_transfer.process()
     t.join()
-    # notify_thread.join()
 
     cast(MagicMock, api_client.reindex_dataproducts).assert_called_once()
+
+    expected_search_value = str(remote_scan.data_product_file.relative_to(remote_scan.data_product_path))
     cast(MagicMock, api_client.metadata_exists).assert_called_once_with(search_value=expected_search_value)
 
     # Assert that reindex_dataproducts and metadata_exists were called

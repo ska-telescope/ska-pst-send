@@ -22,10 +22,10 @@ def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib.Path) 
     """Test the VoltageRecorderScan constructor."""
     try:
         scan = create_voltage_recorder_scan(local_product_path, scan_path)
-        assert scan.scan_config_file_exists is False
-        assert scan.is_recording
-        assert scan.data_product_file_exists is False
-        assert scan.is_complete is False
+        assert scan.scan_config_file_exists() is False
+        assert scan.is_recording()
+        assert scan.data_product_file_exists() is False
+        assert scan.is_complete() is False
         assert len(scan.get_all_files()) == 0
     finally:
         remove_send_tempdir()
@@ -40,15 +40,15 @@ def test_update_files(voltage_recording_scan: VoltageRecorderScan, scan_files: L
 
     # manually create the ska-data-product.yaml file
     scan._data_product_file.touch()
-    assert scan.data_product_file_exists
+    assert scan.data_product_file_exists()
 
     # check the file count matches the expected: scan_files + scan_config + data_product
     assert len(scan.get_all_files()) == len(scan_files) + 2
 
     # manually create the scan_completed file
     scan._scan_completed_file.touch()
-    assert scan.is_recording is False
-    assert scan.is_complete
+    assert scan.is_recording() is False
+    assert scan.is_complete()
 
     # ensure the scan_complete file is not counted:
     # i.e. check the file count matches the expected: scan_files + scan_config + data_product
@@ -118,7 +118,7 @@ def test_next_unprocessed_file(
 
         mocked_command.reset_mock()
 
-        assert unprocessed_file[2].exists
+        assert unprocessed_file[2].exists()
         assert unprocessed_file[2] == expected[2]
 
     assert scan.next_unprocessed_file(minimum_age=0) is None

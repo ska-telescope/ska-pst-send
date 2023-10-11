@@ -9,9 +9,7 @@
 from __future__ import annotations
 
 import logging
-import pathlib
 import threading
-from typing import List
 
 from .voltage_recorder_scan import VoltageRecorderScan
 
@@ -48,35 +46,42 @@ class ScanProcess(threading.Thread):
         self.loop_wait = loop_wait
         self.minimum_age = minimum_age
         self.completed = False
-        self.unprocessable_files: List[pathlib.Path] = []
+
+    def _handle_scan_potentially_complete(self: ScanProcess) -> None:
+        self.logger.debug(f"checking if scan {self.scan.scan_id} is actually complete.")
+        if self.scan.is_complete() and self.scan.next_unprocessed_file(minimum_age=0) is None:
+            self.logger.debug(
+                f"scan {self.scan.scan_id} has all files processed and has received scan_complete file"
+            )
+            self.logger.debug(f"generating data product YAML file for scan {self.scan.scan_id}")
+            self.scan.generate_data_product_file()
+            # only mark as completed after generating data product file
+            self.completed = True
 
     def run(self: ScanProcess) -> None:
         """Perform processing of scan files."""
-        self.logger.debug("starting scan processing thread")
+        self.logger.debug(f"{self} starting scan processing thread")
 
-        while not self.completed:
+        try:
+            while not self.completed and not self.scan.transfer_failed:
+                self.scan.process_next_unprocessed_file(minimum_age=self.minimum_age)
+                self._handle_scan_potentially_complete()
 
-            # get an unprocessed file that is older enough
-            unprocessed_file = self.scan.next_unprocessed_file(minimum_age=self.minimum_age)
-            if unprocessed_file is not None:
-                self.logger.debug(f"processing {unprocessed_file}")
-                ok = self.scan.process_file(unprocessed_file)  # type: ignore
-                self.logger.debug(f"result={ok}")
-                if not ok:
-                    self.unprocessable_files.append(unprocessed_file[2].file_name)
+                # if not yet completed, conditional wait on exit condition variable
+                if not self.completed:
+                    with self.exit_cond:
+                        if self.exit_cond.wait(timeout=self.loop_wait):
+                            self.logger.debug("ScanProcess thread exiting on command")
+                            return
 
-            # test if the scan_completed marker exists and there are no unprocessed files of any age
-            if self.scan.is_complete and self.scan.next_unprocessed_file(minimum_age=0) is None:
-                if not self.scan.data_product_file_exists:
-                    self.logger.debug("generating data product YAML file")
-                    self.scan.generate_data_product_file()
-                self.completed = True
+            if self.completed:
+                self.logger.info(f"{self} thread exiting as processing is complete")
+            elif self.scan.transfer_failed:
+                self.logger.info(f"{self} thread exiting due to the transfer thread failing")
+        except Exception:
+            self.logger.exception(f"{self} thread received an exception. Exiting loop.", exc_info=True)
+            self.scan.processing_failed = True
 
-            # if not yet completed, conditional wait on exit condition variable
-            if not self.completed:
-                with self.exit_cond:
-                    if self.exit_cond.wait(timeout=self.loop_wait):
-                        self.logger.debug("ScanProcess thread exiting on command")
-                        return
-
-        self.logger.debug("ScanProcess thread exiting as processing is complete")
+    def __repr__(self: ScanProcess) -> str:
+        """Get string representation for scan process."""
+        return f"ScanProcess(scan_id={self.scan.scan_id})"

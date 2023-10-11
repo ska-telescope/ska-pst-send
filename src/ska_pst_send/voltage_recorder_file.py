@@ -88,11 +88,10 @@ class VoltageRecorderFile:
         :return: age of the file in seconds
         :rtype: int
         """
-        if not self.exists:
+        if not self.exists():
             return -1
         return time.time() - os.path.getmtime(self.file_name)
 
-    @property
     def exists(self: VoltageRecorderFile) -> bool:
         """
         Return true if the file exists.
@@ -110,7 +109,7 @@ class VoltageRecorderFile:
         :return: size of the file_name in bytes.
         :rtype: int
         """
-        if self.exists:
+        if self.exists():
             return self.file_name.stat().st_size
         return 0
 

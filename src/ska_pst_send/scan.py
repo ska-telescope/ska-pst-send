@@ -34,10 +34,12 @@ class Scan:
         """
         self.data_product_path = data_product_path
         self.relative_scan_path = relative_scan_path
+        (self.eb_id, self.subsystem_id, self.scan_id) = relative_scan_path.parts
         self.full_scan_path = data_product_path / relative_scan_path
         self.logger = logger or logging.getLogger(__name__)
 
-        assert self.data_product_path.exists() and self.data_product_path.is_dir()
+        # ensure we have the base directory. Important for Remote view of scan
+        self.full_scan_path.mkdir(parents=True, exist_ok=True)
 
         self._scan_config_file = self.full_scan_path / "scan_configuration.json"
         self._data_product_file = self.full_scan_path / "ska-data-product.yaml"
@@ -51,24 +53,19 @@ class Scan:
 
         # then move up the directory tree to the data_product path, pruning directory if empty
         to_prune = self.full_scan_path.parent
-        while True:
+        while to_prune.is_relative_to(self.data_product_path):
+            delta = to_prune.relative_to(self.data_product_path)
+            if delta == pathlib.Path("."):
+                self.logger.debug("pruned scan_path: stopping prune")
+                return
             try:
-                delta = to_prune.relative_to(self.data_product_path)
-                if delta == pathlib.Path("."):
-                    self.logger.debug("pruned scan_path: stopping prune")
-                    return
-                try:
-                    # remove the directory, if it is empty
-                    to_prune.rmdir()
-                    to_prune = to_prune.parent
-                except OSError as exc:
-                    self.logger.debug(f"found non-empty parent directory, stopping prune: {exc}")
-                    return
-            except ValueError as exc:
-                self.logger.debug(f"walked above data_product_path, stopping prune: {exc}")
+                # remove the directory, if it is empty
+                to_prune.rmdir()
+                to_prune = to_prune.parent
+            except OSError as exc:
+                self.logger.debug(f"found non-empty parent directory, stopping prune: {exc}")
                 return
 
-    @property
     def is_recording(self: Scan) -> bool:
         """
         Return true is the scan been not yet been marked as completed.
@@ -78,7 +75,6 @@ class Scan:
         """
         return not self._scan_completed_file.exists()
 
-    @property
     def data_product_file_exists(self: Scan) -> bool:
         """
         Return true if the ska-pst-dataproduct.yaml file exists.
@@ -88,7 +84,6 @@ class Scan:
         """
         return self._data_product_file.exists()
 
-    @property
     def scan_config_file_exists(self: Scan) -> bool:
         """
         Return true if the scan-config.json file exists.
@@ -98,7 +93,6 @@ class Scan:
         """
         return self._scan_config_file.exists()
 
-    @property
     def is_complete(self: Scan) -> bool:
         """
         Return true if the scan_completed file exists.
@@ -117,3 +111,7 @@ class Scan:
         :rtype pathlib.Path:
         """
         return self._data_product_file
+
+    def __repr__(self: Scan) -> str:
+        """Get string representation of current VoltageRecorderScan."""
+        return f"Scan(eb_id={self.eb_id}, subsystem_id={self.subsystem_id}, scan_id={self.scan_id})"

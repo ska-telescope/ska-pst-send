@@ -18,29 +18,29 @@ def test_constructor(local_product_path: pathlib.Path, scan_path: pathlib.Path) 
     """Test the Scan constructor correctly initialises an object."""
     try:
         scan = create_scan(local_product_path, scan_path)
-        assert scan.scan_config_file_exists is False
-        assert scan.is_recording
-        assert scan.data_product_file_exists is False
-        assert scan.is_complete is False
+        assert scan.scan_config_file_exists() is False
+        assert scan.is_recording()
+        assert scan.data_product_file_exists() is False
+        assert scan.is_complete() is False
     finally:
         remove_send_tempdir()
 
 
 def test_scan_parameters(scan: Scan) -> None:
     """Test the Scan properties return the expected values base on file system control files."""
-    assert scan.scan_config_file_exists
-    assert scan.is_recording
-    assert scan.data_product_file_exists is False
-    assert scan.is_complete is False
+    assert scan.scan_config_file_exists()
+    assert scan.is_recording()
+    assert scan.data_product_file_exists() is False
+    assert scan.is_complete() is False
 
     # manually create the ska-data-product.yaml file
     scan._data_product_file.touch()
-    assert scan.data_product_file_exists
+    assert scan.data_product_file_exists()
 
     # manually create the scan_completed file
     scan._scan_completed_file.touch()
-    assert scan.is_recording is False
-    assert scan.is_complete
+    assert scan.is_recording() is False
+    assert scan.is_complete()
 
 
 def test_delete_scan(scan: Scan) -> None:

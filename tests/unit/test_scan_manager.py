@@ -7,9 +7,13 @@
 
 """This module contains the pytest tests for the ScanManager."""
 
+import logging
+import random
+import time
 from typing import List
 
 from ska_pst_send import ScanManager, VoltageRecorderScan
+from ska_pst_send.voltage_recorder_scan import NANOSECONDS_PER_SEC
 
 
 def test_constructor(three_local_scans: List[VoltageRecorderScan], subsystem_id: str) -> None:
@@ -41,7 +45,7 @@ def test_oldest_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
     data_product_path = scan_list[0].data_product_path
     scan_manager = ScanManager(data_product_path, subsystem_id)
 
-    oldest = scan_manager.oldest_scan
+    oldest = scan_manager.next_unprocessed_scan()
 
     # for now, rely on the scan_manager to order the _scans attribute correctly
     assert oldest is not None, "Expected oldest scan to not be None"
@@ -67,7 +71,7 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
         scan_manager._scans[0].delete_scan()
 
         # force the scan_manager to detect the deleted scan
-        oldest = scan_manager.oldest_scan
+        oldest = scan_manager.next_unprocessed_scan()
         assert len(scan_manager._scans) == len(scan_list) - (i + 1)
 
         if (i + 1) < len(scan_list):
@@ -81,4 +85,90 @@ def test_delete_scan(three_local_scans: List[VoltageRecorderScan], subsystem_id:
 
     scan_manager._refresh_scans()
     assert len(scan_manager._scans) == 0
-    assert scan_manager.oldest_scan is None
+    assert scan_manager.next_unprocessed_scan() is None
+
+
+def test_next_unprocessed_scan_gets_scan_with_earliest_modified_time(
+    three_local_scans: List[VoltageRecorderScan], subsystem_id: str
+) -> None:
+    """Test scan manager returns oldest scan if all are active."""
+    scan_list = three_local_scans
+    data_product_path = scan_list[0].data_product_path
+    random.shuffle(scan_list)
+
+    scan_offset_ns: int = int(30 * NANOSECONDS_PER_SEC)
+    now_ns = time.time_ns()
+    for (idx, s) in enumerate(scan_list):
+        s._modified_time_ns = now_ns - idx * scan_offset_ns
+
+    expected_scan = scan_list[-1]
+
+    # shuffle again
+    random.shuffle(scan_list)
+    scan_manager = ScanManager(data_product_path, subsystem_id)
+    scan_manager._scans = scan_list
+
+    actual_scan = scan_manager.next_unprocessed_scan()
+    assert expected_scan == actual_scan, "Expected scan that had the earliest modified time"
+
+
+def test_next_unprocessed_scan_gets_only_active_scans_if_multiple_scans(
+    three_local_scans: List[VoltageRecorderScan], subsystem_id: str
+) -> None:
+    """Test scan manager returns oldest active scan, ignoring in inactive scans."""
+    scan_list = [*three_local_scans]
+    data_product_path = scan_list[0].data_product_path
+    random.shuffle(scan_list)
+
+    scan_timeout_sec = 10
+    scan_timeout_ns: int = int(scan_timeout_sec * NANOSECONDS_PER_SEC)
+
+    now_ns = time.time_ns()
+
+    # setup a modified time earlier than active modified time
+    # this sets up 2 inactive scans
+    for (idx, s) in enumerate(scan_list[:-1]):
+        s._modified_time_ns = now_ns - (idx + 2) * scan_timeout_ns
+
+    expected_scan = scan_list[-1]
+
+    # shuffle again
+    random.shuffle(scan_list)
+    scan_manager = ScanManager(data_product_path, subsystem_id, scan_timeout=scan_timeout_sec)
+    scan_manager._scans = scan_list
+
+    actual_scan = scan_manager.next_unprocessed_scan()
+    assert expected_scan == actual_scan, "Expected scan that had the earliest modified time"
+
+
+def test_next_unprocessed_scan_gets_oldest_inactive_scan_if_no_active_scan(
+    three_local_scans: List[VoltageRecorderScan], subsystem_id: str, logger: logging.Logger
+) -> None:
+    """Test scan manager returns oldest inactive scan if no active scans available."""
+    scan_list = [*three_local_scans]
+    data_product_path = scan_list[0].data_product_path
+    random.shuffle(scan_list)
+
+    scan_timeout_sec = 10
+    scan_timeout_ns: int = int(scan_timeout_sec * NANOSECONDS_PER_SEC)
+
+    now_ns = time.time_ns()
+
+    # setup a modified time earlier than active modified time
+    # all scans are modified before active time
+    for (idx, s) in enumerate(scan_list):
+        s._modified_time_ns = now_ns - (idx + 2) * scan_timeout_ns
+
+    for s in scan_list:
+        logger.info(f"{s} has modified time of {s.modified_time_secs}")
+
+    expected_scan = scan_list[-1]
+
+    # shuffle again
+    random.shuffle(scan_list)
+
+    scan_manager = ScanManager(data_product_path, subsystem_id, scan_timeout=scan_timeout_sec)
+    scan_manager._scans = scan_list
+
+    actual_scan = scan_manager.next_unprocessed_scan()
+    assert expected_scan == actual_scan, "Expected scan that had the earliest modified time"

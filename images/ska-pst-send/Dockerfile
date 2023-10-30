@@ -11,7 +11,7 @@ LABEL \
     license="BSD-3-Clause" \
     base="${SEND_BASE_IMAGE}" \
     org.skatelescope.team="PST Team" \
-    org.skatelescope.version="0.0.5" \
+    org.skatelescope.version="0.0.6" \
     int.skao.application="ska-pst-send Builder"
 
 # Copy across files that are used to help orchestrate container compositions

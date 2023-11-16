@@ -48,8 +48,9 @@ class Scan:
     def delete_scan(self: Scan) -> None:
         """Delete all the local data files associated with a scan."""
         self.logger.debug(f"deleting all {self.relative_scan_path}")
-        # first delete all files in the scan directory
-        shutil.rmtree(self.full_scan_path)
+        # first delete all files in the scan directory - if it exists
+        if self.path_exists():
+            shutil.rmtree(self.full_scan_path)
 
         # then move up the directory tree to the data_product path, pruning directory if empty
         to_prune = self.full_scan_path.parent
@@ -111,6 +112,10 @@ class Scan:
         :rtype pathlib.Path:
         """
         return self._data_product_file
+
+    def path_exists(self: Scan) -> bool:
+        """Get whether the full path to scan exists or not."""
+        return self.full_scan_path.exists()
 
     def __repr__(self: Scan) -> str:
         """Get string representation of current VoltageRecorderScan."""

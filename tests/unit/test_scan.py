@@ -46,10 +46,10 @@ def test_scan_parameters(scan: Scan) -> None:
 def test_delete_scan(scan: Scan) -> None:
     """Test the Scan delete_scan method."""
     assert scan.data_product_path.exists()
-    assert scan.full_scan_path.exists()
+    assert scan.path_exists()
     scan.delete_scan()
     assert scan.data_product_path.exists()
-    assert scan.full_scan_path.exists() is False
+    assert scan.path_exists() is False
 
 
 def test_delete_multiple_scans(scan_factory: Callable[..., Scan]) -> None:
@@ -60,13 +60,13 @@ def test_delete_multiple_scans(scan_factory: Callable[..., Scan]) -> None:
     # delete the first scan and assert that the second scan remains
     scan1.delete_scan()
     assert scan1.data_product_path.exists()
-    assert scan1.full_scan_path.exists() is False
-    assert scan2.full_scan_path.exists()
+    assert scan1.path_exists() is False
+    assert scan2.path_exists()
 
     # delete the second scan and assert that it is gone
     scan2.delete_scan()
     assert scan2.data_product_path.exists()
-    assert scan2.full_scan_path.exists() is False
+    assert scan2.path_exists() is False
 
     # check the data product path for both scans is now empty
     count = 0

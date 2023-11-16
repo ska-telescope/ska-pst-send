@@ -6,7 +6,18 @@
 # See LICENSE for more info.
 
 """Module init code."""
-import logging
+
+__all__ = [
+    "DpdApiClient",
+    "Scan",
+    "MetaDataBuilder",
+    "ScanManager",
+    "ScanTransfer",
+    "ScanProcess",
+    "VoltageRecorderScan",
+    "VoltageRecorderFile",
+    "SdpTransfer",
+]
 
 from .dpd_api_client import DpdApiClient
 from .metadata_builder import MetaDataBuilder
@@ -17,18 +28,3 @@ from .scan_process import ScanProcess
 from .sdp_transfer import SdpTransfer
 from .voltage_recorder_scan import VoltageRecorderScan
 from .voltage_recorder_file import VoltageRecorderFile
-
-__all__ = [
-    "DpdApiClient",
-    "Scan",
-    "ScanManager",
-    "ScanTransfer",
-    "ScanProcess",
-    "VoltageRecorderScan",
-    "VoltageRecorderFile",
-    "SdpTransfer",
-]
-
-logger = logging.getLogger("ska_pst_send")
-
-logger.info(f"{MetaDataBuilder()}")

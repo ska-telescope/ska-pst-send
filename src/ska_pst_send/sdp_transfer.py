@@ -81,7 +81,7 @@ class SdpTransfer:
         self.logger.debug(f"search_value={search_value}")
 
         def _on_giveup(*args: Any, **kwargs: Any) -> None:
-            self.logger.error(f"Metadata not found. Retaining {local_scan.full_scan_path}")
+            self.logger.warning(f"Metadata not found. Retaining {local_scan.full_scan_path}")
 
         def _on_success(*args: Any, **kwargs: Any) -> None:
             self.logger.debug("Metadata found. Calling local_scan.delete_scan()")
@@ -91,10 +91,13 @@ class SdpTransfer:
             backoff.expo,
             on_giveup=_on_giveup,
             on_success=_on_success,
-            max_time=120.0,
+            max_time=30.0,
         )
         def _check_scan_indexed() -> bool:
-            return self._dpd_api_client.metadata_exists(search_value=search_value)
+            # if the scan path no longer exists we can break out of this check
+            return not local_scan.path_exists() or self._dpd_api_client.metadata_exists(
+                search_value=search_value
+            )
 
         _check_scan_indexed()
 
@@ -105,6 +108,11 @@ class SdpTransfer:
         # reset processing and transfer states needs to be done before threads are started
         local_scan.processing_failed = False
         local_scan.transfer_failed = False
+
+        if not local_scan.is_valid():
+            self.logger.info(f"Scan {local_scan.scan_id} is not valid for processing. Ignoring")
+            local_scan.update_modified_time()
+            return
 
         # perform post-processing on the scan to generate output files for transfer
         scan_process = ScanProcess(local_scan, self._cond, logger=self.logger)

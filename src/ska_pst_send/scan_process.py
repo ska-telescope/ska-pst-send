@@ -63,7 +63,7 @@ class ScanProcess(threading.Thread):
         self.logger.debug(f"{self} starting scan processing thread")
 
         try:
-            while not self.completed and not self.scan.transfer_failed:
+            while not self.completed and self.scan.is_valid():
                 self.scan.process_next_unprocessed_file(minimum_age=self.minimum_age)
                 self._handle_scan_potentially_complete()
 
@@ -78,6 +78,8 @@ class ScanProcess(threading.Thread):
                 self.logger.info(f"{self} thread exiting as processing is complete")
             elif self.scan.transfer_failed:
                 self.logger.info(f"{self} thread exiting due to the transfer thread failing")
+            elif not self.scan.path_exists():
+                self.logger.info(f"{self} thread exiting due to scan directory no exists")
         except Exception:
             self.logger.exception(f"{self} thread received an exception. Exiting loop.", exc_info=True)
             self.scan.processing_failed = True

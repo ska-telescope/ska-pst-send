@@ -12,7 +12,7 @@ LABEL \
     description="This image includes the dependencies for building ska-pst-send" \
     base="${SEND_BASE_IMAGE}" \
     org.skatelescope.team="PST Team" \
-    org.skatelescope.version="0.0.8" \
+    org.skatelescope.version="0.0.9" \
     int.skao.application="ska-pst-send Builder"
 
 WORKDIR /app

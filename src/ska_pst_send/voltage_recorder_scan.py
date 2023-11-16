@@ -63,6 +63,16 @@ class VoltageRecorderScan(Scan):
         """Get last modified time in seconds."""
         return self._modified_time_ns / NANOSECONDS_PER_SEC
 
+    def is_valid(self: VoltageRecorderScan) -> bool:
+        """Get whether the the scan is still valid or not.
+
+        A valid scan matches the following conditions:
+            * file processing hasn't failed
+            * file transfer hasn't failed
+            * the file directory still exists
+        """
+        return self.path_exists() and not self.processing_failed and not self.transfer_failed
+
     def update_modified_time(self: VoltageRecorderScan) -> None:
         """Update the last time the scan was processed."""
         curr_time_ns = time.time_ns()

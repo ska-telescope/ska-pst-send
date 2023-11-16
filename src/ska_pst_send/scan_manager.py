@@ -64,7 +64,7 @@ class ScanManager:
 
         # remove deleted scans from the list
         for scan in self._scans:
-            if scan.relative_scan_path not in self.relative_scan_paths:
+            if scan.relative_scan_path not in self.relative_scan_paths or not scan.path_exists():
                 self.logger.debug(f"removing scan at {str(scan.relative_scan_path)}")
                 self._scans.remove(scan)
 

@@ -115,7 +115,7 @@ class ScanTransfer(threading.Thread):
         self.logger.debug(f"{self} starting transfer thread")
 
         try:
-            while not self.completed and not self.local_scan.processing_failed:
+            while not self.completed and self.local_scan.is_valid():
                 # if received exit condition during loop exit out.
                 if not self._transfer_files():
                     return
@@ -131,6 +131,8 @@ class ScanTransfer(threading.Thread):
                 self.logger.info(f"{self} thread exiting as transfer is complete")
             elif self.local_scan.processing_failed:
                 self.logger.info(f"{self} thread exiting due to the processing thread failing")
+            elif not self.local_scan.path_exists():
+                self.logger.info(f"{self} thread exiting due to scan directory no exists")
         except Exception:
             self.logger.exception(f"{self} thread received an exception. Exiting loop.", exc_info=True)
             self.local_scan.transfer_failed = True
